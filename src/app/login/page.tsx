@@ -1,0 +1,32 @@
+import { redirect } from "next/navigation";
+import { FileSignature } from "lucide-react";
+import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+import { LoginForm } from "@/components/LoginForm";
+
+export default async function LoginPage() {
+  const userCount = await prisma.user.count();
+  if (userCount === 0) {
+    redirect("/setup");
+  }
+
+  const session = await auth();
+  if (session?.user) {
+    redirect("/dashboard");
+  }
+
+  return (
+    <div className="flex flex-1 items-center justify-center px-4 py-12">
+      <div className="w-full max-w-sm space-y-6">
+        <div className="flex flex-col items-center gap-2 text-center">
+          <FileSignature size={32} className="text-accent" />
+          <h1 className="text-2xl font-semibold">Welcome back</h1>
+          <p className="text-sm text-foreground/60">Sign in to manage your contracts.</p>
+        </div>
+        <div className="rounded-xl border border-border bg-surface p-6">
+          <LoginForm />
+        </div>
+      </div>
+    </div>
+  );
+}

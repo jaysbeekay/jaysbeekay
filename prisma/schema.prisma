@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum ContractCategory {
+  RENTAL
+  CAR_INSURANCE
+  HOME_INSURANCE
+  STRATA_INSURANCE
+  HEALTH_INSURANCE
+  LIFE_INSURANCE
+  UTILITY
+  TELECOM
+  SUBSCRIPTION
+  LOAN
+  WARRANTY
+  OTHER
+}
+
+enum RenewalType {
+  AUTO_RENEW
+  MANUAL_RENEWAL
+  FIXED_TERM
+}
+
+enum BillingFrequency {
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  ANNUALLY
+  ONE_OFF
+}
+
+enum ContractStatus {
+  ACTIVE
+  CANCELLED
+}
+
+enum NotificationChannel {
+  EMAIL
+  NTFY
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String
+  email          String    @unique
+  passwordHash   String
+  role           Role      @default(MEMBER)
+  emailReminders Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  contracts      Contract[]
+
+  @@map("users")
+}
+
+model Contract {
+  id                String        @id @default(cuid())
+  title             String
+  category          ContractCategory
+  provider          String
+  contractNumber    String?
+  startDate         DateTime?
+  endDate           DateTime?
+  renewalType       RenewalType   @default(MANUAL_RENEWAL)
+  noticePeriodDays  Int?
+  cost              Float?
+  currency          String        @default("AUD")
+  billingFrequency  BillingFrequency?
+  status            ContractStatus @default(ACTIVE)
+  contactName       String?
+  contactPhone      String?
+  contactEmail      String?
+  notes             String?
+  reminderDaysBefore String?      @default("30,14,7,1")
+
+  createdById       String
+  createdBy         User          @relation(fields: [createdById], references: [id])
+
+  documents         Document[]
+  notifications     NotificationLog[]
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@map("contracts")
+}
+
+model Document {
+  id         String   @id @default(cuid())
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  filename   String
+  storedName String
+  mimeType   String
+  size       Int
+  uploadedAt DateTime @default(now())
+
+  @@map("documents")
+}
+
+model NotificationLog {
+  id            String              @id @default(cuid())
+  contractId    String
+  contract      Contract            @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  channel       NotificationChannel
+  thresholdDays Int
+  sentAt        DateTime            @default(now())
+
+  @@unique([contractId, channel, thresholdDays])
+  @@map("notification_logs")
+}

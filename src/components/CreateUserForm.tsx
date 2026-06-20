@@ -1,0 +1,58 @@
+"use client";
+
+import { useActionState } from "react";
+import { createUser, type ActionState } from "@/lib/actions/auth";
+import { SubmitButton } from "@/components/SubmitButton";
+import { FormMessage } from "@/components/FormMessage";
+
+const inputClass =
+  "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent";
+
+export function CreateUserForm() {
+  const [state, formAction] = useActionState<ActionState, FormData>(createUser, null);
+
+  return (
+    <form action={formAction} className="grid gap-3 md:grid-cols-2">
+      <div className="space-y-1">
+        <label htmlFor="name" className="text-sm font-medium">
+          Name
+        </label>
+        <input id="name" name="name" required className={inputClass} />
+      </div>
+      <div className="space-y-1">
+        <label htmlFor="email" className="text-sm font-medium">
+          Email
+        </label>
+        <input id="email" name="email" type="email" required className={inputClass} />
+      </div>
+      <div className="space-y-1">
+        <label htmlFor="password" className="text-sm font-medium">
+          Temporary password
+        </label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          required
+          minLength={8}
+          className={inputClass}
+        />
+      </div>
+      <div className="space-y-1">
+        <label htmlFor="role" className="text-sm font-medium">
+          Role
+        </label>
+        <select id="role" name="role" defaultValue="MEMBER" className={inputClass}>
+          <option value="MEMBER">Member</option>
+          <option value="ADMIN">Admin</option>
+        </select>
+      </div>
+      <div className="md:col-span-2">
+        <FormMessage error={state?.error} success={state?.success} />
+      </div>
+      <div className="md:col-span-2">
+        <SubmitButton>Add household member</SubmitButton>
+      </div>
+    </form>
+  );
+}

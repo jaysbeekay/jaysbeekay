@@ -1,0 +1,17 @@
+{
+  "name": "Contracts",
+  "short_name": "Contracts",
+  "description": "Track your personal contracts and never miss a renewal.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f766e",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
