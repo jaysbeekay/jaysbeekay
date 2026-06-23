@@ -44,14 +44,22 @@ you're signed in.
 ```bash
 cp .env.example .env
 # edit .env: set AUTH_SECRET (required), and optionally SMTP_*/NTFY_* for reminders
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 ```
 
-This builds the app, runs pending Prisma migrations automatically on
-container start, and serves it on port 3000. The SQLite database
-(`data/app.db`) and uploaded documents (`data/uploads/`) live in `./data` on
-the host, mounted into the container — back up that directory to back up
-everything.
+This pulls the prebuilt image from
+[Docker Hub](https://hub.docker.com/r/jaysbeekay/contracts), runs pending
+Prisma migrations automatically on container start, and serves the app on
+port 3000. The SQLite database (`data/app.db`) and uploaded documents
+(`data/uploads/`) live in `./data` on the host, mounted into the container —
+back up that directory to back up everything.
+
+The image is built and pushed to Docker Hub automatically by
+[`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml)
+on every push to `main` (tagged `latest`) and on `v*` tags. To build from
+source instead of pulling, run `docker build -t jaysbeekay/contracts:local .`
+and change `image:` in `docker-compose.yml` to that tag.
 
 ## Locking down access with nginx + mTLS
 
