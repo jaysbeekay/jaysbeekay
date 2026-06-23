@@ -1,17 +1,21 @@
 # Contracts
 
 A self-hostable web app for tracking personal contracts — rentals, car/home/strata
-insurance, subscriptions, loans, and more — with reminders before they expire.
+insurance, subscriptions, loans, and more — and product warranties, with
+reminders before either expires.
 
 ## Features
 
 - Track contracts with provider, dates, cost/billing frequency, renewal type,
   notice period, contact details, and free-form notes
-- Attach documents (PDF/images/Word docs) to each contract — uploading a PDF
-  or photo when creating a contract auto-fills fields like provider, dates,
-  cost, and contract/policy number
-- Dashboard with active/expiring/expired counts and estimated monthly spend
-- Configurable reminder thresholds per contract (e.g. 30/14/7/1 days before expiry)
+- Track product warranties with manufacturer, vendor, serial number, purchase
+  date, warranty end date, and price — attach the invoice and a product photo
+- Attach documents (PDF/images/Word docs) to each contract or product —
+  uploading an invoice/PDF/photo when creating a contract or product auto-fills
+  fields like provider/manufacturer, dates, and cost/price
+- Dashboard with active/expiring/expired counts and estimated monthly spend,
+  for both contracts and warranties
+- Configurable reminder thresholds per contract/product (e.g. 30/14/7/1 days before expiry)
 - Reminders via email (SMTP) and/or push notifications ([ntfy](https://ntfy.sh))
 - Multi-user/household accounts — everyone in the household sees the same contracts
 - Admin-invite-only accounts (no public sign-up) since this stores sensitive data
@@ -196,6 +200,11 @@ start/end dates, cost, billing frequency, contact details — fill in
 automatically. Review and correct anything before saving; the document is
 attached to the contract once you do.
 
+The same applies when adding a new product: upload its invoice and fields
+like product name, manufacturer, vendor, serial number, purchase date, and
+price fill in automatically. A separate photo upload (no auto-fill) is also
+available so you can keep a picture of the item itself.
+
 Extraction runs entirely locally, in two stages:
 
 1. **Text extraction**: PDFs with a text layer are read directly
@@ -238,11 +247,12 @@ If neither email nor ntfy is configured, the scheduler runs but sends nothing
 
 ## Notifications
 
-Each contract has its own comma-separated list of reminder thresholds (days
-before expiry, default `30,14,7,1`). Once a day (or on whatever schedule you
-configure), the app checks all active contracts with an end date and sends a
-reminder on each configured channel for the soonest threshold that's been
-crossed and not already notified — so adding a contract that's already past
+Each contract and product has its own comma-separated list of reminder
+thresholds (days before expiry, default `30,14,7,1`). Once a day (or on
+whatever schedule you configure), the app checks all active contracts with an
+end date and all products with a warranty end date, and sends a reminder on
+each configured channel for the soonest threshold that's been crossed and not
+already notified — so adding a contract or product that's already past
 several thresholds only sends one catch-up reminder per channel, not one per
 threshold.
 
