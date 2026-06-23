@@ -77,6 +77,7 @@ export default async function ProductDetailPage({
           <Detail label="Manufacturer" value={product.manufacturer ?? "—"} />
           <Detail label="Vendor / retailer" value={product.vendor ?? "—"} />
           <Detail label="Serial number" value={product.serialNumber ?? "—"} />
+          <Detail label="Barcode" value={product.barcode ?? "—"} />
           <Detail label="Purchase date" value={formatDate(product.purchaseDate)} />
           <Detail label="Warranty end date" value={formatDate(product.warrantyEndDate)} />
           <Detail

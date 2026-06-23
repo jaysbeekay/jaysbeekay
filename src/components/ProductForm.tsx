@@ -2,11 +2,12 @@
 
 import { useActionState, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
-import { Upload } from "lucide-react";
+import { ScanBarcode, Upload } from "lucide-react";
 import type { ProductModel } from "@/generated/prisma/models";
 import type { ActionState } from "@/lib/actions/products";
 import { SubmitButton } from "@/components/SubmitButton";
 import { FormMessage } from "@/components/FormMessage";
+import { BarcodeScanner } from "@/components/BarcodeScanner";
 
 function toDateInputValue(date: Date | null | undefined) {
   if (!date) return "";
@@ -27,11 +28,15 @@ export function ProductForm({
   const [state, formAction] = useActionState<ActionState, FormData>(action, null);
   const [scanning, setScanning] = useState(false);
   const [scanMessage, setScanMessage] = useState<string | null>(null);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [lookingUp, setLookingUp] = useState(false);
+  const [lookupMessage, setLookupMessage] = useState<string | null>(null);
 
   const nameRef = useRef<HTMLInputElement>(null);
   const manufacturerRef = useRef<HTMLInputElement>(null);
   const vendorRef = useRef<HTMLInputElement>(null);
   const serialNumberRef = useRef<HTMLInputElement>(null);
+  const barcodeRef = useRef<HTMLInputElement>(null);
   const purchaseDateRef = useRef<HTMLInputElement>(null);
   const priceRef = useRef<HTMLInputElement>(null);
 
@@ -76,6 +81,43 @@ export function ProductForm({
     } finally {
       setScanning(false);
     }
+  }
+
+  async function handleBarcodeLookup(codeOverride?: string) {
+    const code = (codeOverride ?? barcodeRef.current?.value ?? "").trim();
+    if (!code) return;
+
+    setLookingUp(true);
+    setLookupMessage(null);
+    try {
+      const res = await fetch(`/api/products/barcode?code=${encodeURIComponent(code)}`);
+      if (res.status === 404) {
+        setLookupMessage("Barcode saved. Automatic lookup isn't enabled on this server.");
+        return;
+      }
+      if (!res.ok) {
+        setLookupMessage("Couldn't look up this barcode. Fill in remaining details manually.");
+        return;
+      }
+
+      const { fields, found } = (await res.json()) as { fields: ExtractedFields; found: boolean };
+      if (found) {
+        applyExtractedFields(fields);
+        setLookupMessage("Fields populated from the barcode — review before saving.");
+      } else {
+        setLookupMessage("No product info found for this barcode.");
+      }
+    } catch {
+      setLookupMessage("Couldn't look up this barcode. Fill in remaining details manually.");
+    } finally {
+      setLookingUp(false);
+    }
+  }
+
+  function handleBarcodeDetected(code: string) {
+    if (barcodeRef.current) barcodeRef.current.value = code;
+    setScannerOpen(false);
+    if (!product) handleBarcodeLookup(code);
   }
 
   return (
@@ -162,6 +204,39 @@ export function ProductForm({
           />
         </Field>
 
+        <Field label="Barcode (UPC/EAN)" htmlFor="barcode">
+          <div className="flex gap-2">
+            <input
+              ref={barcodeRef}
+              id="barcode"
+              name="barcode"
+              defaultValue={product?.barcode ?? ""}
+              placeholder="e.g. 9310036001234"
+              className={inputClass}
+            />
+            <button
+              type="button"
+              onClick={() => setScannerOpen(true)}
+              aria-label="Scan barcode"
+              title="Scan barcode"
+              className="flex items-center justify-center rounded-lg border border-border px-3 hover:bg-black/5 dark:hover:bg-white/5"
+            >
+              <ScanBarcode size={16} />
+            </button>
+          </div>
+          {!product && (
+            <button
+              type="button"
+              onClick={() => handleBarcodeLookup()}
+              disabled={lookingUp}
+              className="mt-1 text-xs font-medium text-accent hover:underline disabled:opacity-50"
+            >
+              {lookingUp ? "Looking up…" : "Look up product info"}
+            </button>
+          )}
+          {lookupMessage && <p className="mt-1 text-sm text-foreground/60">{lookupMessage}</p>}
+        </Field>
+
         <Field label="Purchase date" htmlFor="purchaseDate">
           <input
             ref={purchaseDateRef}
@@ -235,6 +310,13 @@ export function ProductForm({
       <div className="flex justify-end gap-3">
         <SubmitButton>{product ? "Save changes" : "Add product"}</SubmitButton>
       </div>
+
+      {scannerOpen && (
+        <BarcodeScanner
+          onDetected={handleBarcodeDetected}
+          onClose={() => setScannerOpen(false)}
+        />
+      )}
     </form>
   );
 }

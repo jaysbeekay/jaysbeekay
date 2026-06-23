@@ -63,6 +63,7 @@ function formToProductInput(formData: FormData) {
     manufacturer: formData.get("manufacturer"),
     vendor: formData.get("vendor"),
     serialNumber: formData.get("serialNumber"),
+    barcode: formData.get("barcode"),
     purchaseDate: formData.get("purchaseDate"),
     warrantyEndDate: formData.get("warrantyEndDate"),
     price: formData.get("price"),

@@ -14,6 +14,7 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@prisma/adapter-libsql": "^7.8.0",
     "@prisma/client": "^7.8.0",
+    "@zxing/browser": "^0.2.0",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",

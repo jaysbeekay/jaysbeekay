@@ -135,6 +135,7 @@ model Product {
   manufacturer       String?
   vendor             String?
   serialNumber       String?
+  barcode            String?
   purchaseDate       DateTime?
   warrantyEndDate    DateTime?
   price              Float?

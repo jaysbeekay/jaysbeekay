@@ -18,6 +18,7 @@ export default async function ProductsPage({
       { manufacturer: { contains: q } },
       { vendor: { contains: q } },
       { serialNumber: { contains: q } },
+      { barcode: { contains: q } },
     ];
   }
 
@@ -44,7 +45,7 @@ export default async function ProductsPage({
           type="search"
           name="q"
           defaultValue={q}
-          placeholder="Search by name, manufacturer, vendor, or serial number…"
+          placeholder="Search by name, manufacturer, vendor, serial number, or barcode…"
           className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent"
         />
         <button

@@ -10,6 +10,8 @@ reminders before either expires.
   notice period, contact details, and free-form notes
 - Track product warranties with manufacturer, vendor, serial number, purchase
   date, warranty end date, and price — attach the invoice and a product photo
+- Scan a product's barcode (UPC/EAN) with the camera when adding it — looks
+  it up against an online database to auto-fill its name and brand
 - Attach documents (PDF/images/Word docs) to each contract or product —
   uploading an invoice/PDF/photo when creating a contract or product auto-fills
   fields like provider/manufacturer, dates, and cost/price
@@ -225,6 +227,24 @@ instance, point `OLLAMA_BASE_URL` at the host's LAN IP or
 `http://host.docker.internal:11434` instead. No document text or extracted
 fields are ever sent anywhere else — only to the Ollama server you configure.
 
+## Barcode scanning for products
+
+When adding a new product, you can tap the scan icon next to the Barcode
+field to scan its UPC/EAN barcode with your device's camera instead of typing
+it in. Scanning happens entirely client-side using [ZXing](https://github.com/zxing-js/library)
+— no image or video ever leaves your browser. Scanning requires a secure
+context (HTTPS or `localhost`), so it won't work over plain HTTP on a LAN
+address; the barcode can still be typed in manually in that case.
+
+The barcode is always saved with the product once scanned (or typed). Looking
+it up online to auto-fill the product's name and manufacturer is a separate,
+opt-in step: set `BARCODE_LOOKUP_ENABLED=true` to enable it. When enabled, the
+scanned number is sent to [UPCitemdb](https://www.upcitemdb.com)'s free,
+keyless trial endpoint (rate-limited per IP) to look up the product; set
+`BARCODE_LOOKUP_API_KEY` (from a paid UPCitemdb plan) to use their
+higher-limit endpoint instead. Leaving lookup disabled still lets you scan
+and save the barcode — it just won't auto-fill anything from it.
+
 ## Configuration
 
 All configuration is via environment variables — see [`.env.example`](.env.example)
@@ -241,6 +261,8 @@ for the full list with defaults. Notable ones:
 | `AUTH_TRUST_HOST` | Set to `true` when running behind a reverse proxy (e.g. nginx) — see "Locking down access with nginx + mTLS" above. |
 | `MCP_TOKEN` | Optional. If set, enables `GET/POST /api/mcp`, a read-only MCP server for querying contracts from an LLM agent — see "Querying contracts from an LLM (MCP)" above. |
 | `OLLAMA_BASE_URL` / `OLLAMA_MODEL` | Optional. Set both to enable the local-LLM fallback for document auto-fill when heuristics can't confidently parse a scan — see "Auto-filling fields from a document" above. |
+| `BARCODE_LOOKUP_ENABLED` | Optional. Set to `true` to look up a scanned product barcode online and auto-fill its name/manufacturer — see "Barcode scanning for products" above. |
+| `BARCODE_LOOKUP_API_KEY` | Optional. A paid UPCitemdb API key for higher-limit barcode lookups, instead of the free keyless trial endpoint. |
 
 If neither email nor ntfy is configured, the scheduler runs but sends nothing
 (no errors).
