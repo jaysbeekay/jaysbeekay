@@ -1,0 +1,83 @@
+import Link from "next/link";
+import { Users } from "lucide-react";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { updateNotificationPreferences } from "@/lib/actions/auth";
+import { isEmailConfigured, isNtfyConfigured } from "@/lib/env";
+import { ChangePasswordForm } from "@/components/ChangePasswordForm";
+
+export default async function SettingsPage() {
+  const session = await auth();
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { id: session!.user.id },
+  });
+
+  return (
+    <div className="max-w-2xl space-y-6">
+      <h1 className="text-2xl font-semibold">Settings</h1>
+
+      <section className="rounded-xl border border-border bg-surface p-4 md:p-6">
+        <h2 className="mb-3 font-medium">Profile</h2>
+        <dl className="grid grid-cols-2 gap-4">
+          <div>
+            <dt className="text-xs text-foreground/50">Name</dt>
+            <dd className="text-sm font-medium">{user.name}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-foreground/50">Email</dt>
+            <dd className="text-sm font-medium">{user.email}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-foreground/50">Role</dt>
+            <dd className="text-sm font-medium">{user.role}</dd>
+          </div>
+        </dl>
+        {user.role === "ADMIN" && (
+          <Link
+            href="/settings/users"
+            className="mt-4 inline-flex items-center gap-2 text-sm text-accent hover:underline"
+          >
+            <Users size={16} />
+            Manage household members
+          </Link>
+        )}
+      </section>
+
+      <section className="rounded-xl border border-border bg-surface p-4 md:p-6">
+        <h2 className="mb-3 font-medium">Notifications</h2>
+        <p className="mb-3 text-sm text-foreground/60">
+          Expiry reminders are sent by email{isNtfyConfigured() ? " and push (ntfy)" : ""}.{" "}
+          {!isEmailConfigured() && !isNtfyConfigured() && (
+            <span className="text-amber-600 dark:text-amber-400">
+              No notification channel is configured yet — set SMTP or ntfy environment
+              variables to enable reminders.
+            </span>
+          )}
+        </p>
+        <form action={updateNotificationPreferences} className="flex items-center gap-2">
+          <input
+            id="emailReminders"
+            name="emailReminders"
+            type="checkbox"
+            defaultChecked={user.emailReminders}
+            className="size-4 rounded border-border accent-accent"
+          />
+          <label htmlFor="emailReminders" className="text-sm">
+            Email me about contracts expiring soon
+          </label>
+          <button
+            type="submit"
+            className="ml-auto rounded-lg border border-border px-3 py-1.5 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/5"
+          >
+            Save
+          </button>
+        </form>
+      </section>
+
+      <section className="rounded-xl border border-border bg-surface p-4 md:p-6">
+        <h2 className="mb-3 font-medium">Change password</h2>
+        <ChangePasswordForm />
+      </section>
+    </div>
+  );
+}

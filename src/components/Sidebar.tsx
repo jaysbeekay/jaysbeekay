@@ -1,0 +1,62 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { FileSignature } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { NAV_ITEMS } from "@/components/nav-items";
+import { SignOutButton } from "@/components/SignOutButton";
+
+function isActive(href: string, pathname: string) {
+  if (href === "/contracts/new") return pathname.startsWith("/contracts/new");
+  if (href === "/contracts") {
+    return pathname.startsWith("/contracts") && !pathname.startsWith("/contracts/new");
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+export function Sidebar({
+  userName,
+  userEmail,
+}: {
+  userName: string;
+  userEmail: string;
+}) {
+  const pathname = usePathname();
+
+  return (
+    <aside className="hidden w-60 flex-col border-r border-border bg-surface md:flex">
+      <div className="flex items-center gap-2 px-6 py-5">
+        <FileSignature size={22} className="text-accent" />
+        <span className="text-lg font-semibold">Contracts</span>
+      </div>
+
+      <nav className="flex-1 space-y-1 px-3">
+        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+          const active = isActive(href, pathname);
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
+                active
+                  ? "bg-accent/10 text-accent"
+                  : "text-foreground/70 hover:bg-black/5 dark:hover:bg-white/5",
+              )}
+            >
+              <Icon size={18} />
+              {label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="border-t border-border px-6 py-4">
+        <p className="truncate text-sm font-medium">{userName}</p>
+        <p className="truncate text-xs text-foreground/60">{userEmail}</p>
+        <SignOutButton className="mt-3 flex items-center gap-2 text-sm text-foreground/70 hover:text-foreground" />
+      </div>
+    </aside>
+  );
+}

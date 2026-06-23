@@ -1,0 +1,54 @@
+import { redirect } from "next/navigation";
+import { Trash2 } from "lucide-react";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { deleteUser } from "@/lib/actions/auth";
+import { ConfirmForm } from "@/components/ConfirmForm";
+import { CreateUserForm } from "@/components/CreateUserForm";
+import { formatDate } from "@/lib/utils";
+
+export default async function ManageUsersPage() {
+  const session = await auth();
+  if (session?.user.role !== "ADMIN") {
+    redirect("/settings");
+  }
+
+  const users = await prisma.user.findMany({ orderBy: { createdAt: "asc" } });
+
+  return (
+    <div className="max-w-2xl space-y-6">
+      <h1 className="text-2xl font-semibold">Household members</h1>
+
+      <section className="rounded-xl border border-border bg-surface p-4 md:p-6">
+        <ul className="divide-y divide-border">
+          {users.map((user) => (
+            <li key={user.id} className="flex items-center justify-between gap-3 py-3">
+              <div>
+                <p className="text-sm font-medium">
+                  {user.name} <span className="text-foreground/50">· {user.role}</span>
+                </p>
+                <p className="text-xs text-foreground/50">
+                  {user.email} · joined {formatDate(user.createdAt)}
+                </p>
+              </div>
+              {user.id !== session.user.id && (
+                <ConfirmForm
+                  action={deleteUser.bind(null, user.id)}
+                  confirmText={`Remove ${user.name} from the household?`}
+                  className="text-foreground/50 hover:text-red-600"
+                >
+                  <Trash2 size={16} />
+                </ConfirmForm>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="rounded-xl border border-border bg-surface p-4 md:p-6">
+        <h2 className="mb-3 font-medium">Add a household member</h2>
+        <CreateUserForm />
+      </section>
+    </div>
+  );
+}

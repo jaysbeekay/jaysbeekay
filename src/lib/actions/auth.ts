@@ -1,0 +1,194 @@
+"use server";
+
+import bcrypt from "bcryptjs";
+import { AuthError } from "next-auth";
+import { revalidatePath } from "next/cache";
+import { prisma } from "@/lib/prisma";
+import { auth, signIn, signOut } from "@/lib/auth";
+import {
+  changePasswordSchema,
+  createUserSchema,
+  loginSchema,
+  setupSchema,
+} from "@/lib/validation/auth";
+
+export type ActionState = { error?: string; success?: string } | null;
+
+function firstIssueMessage(error: { issues: { message: string }[] }) {
+  return error.issues[0]?.message ?? "Invalid input";
+}
+
+export async function setupAdmin(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const existingUsers = await prisma.user.count();
+  if (existingUsers > 0) {
+    return { error: "Setup has already been completed." };
+  }
+
+  const parsed = setupSchema.safeParse({
+    name: formData.get("name"),
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
+  if (!parsed.success) {
+    return { error: firstIssueMessage(parsed.error) };
+  }
+
+  const passwordHash = await bcrypt.hash(parsed.data.password, 12);
+
+  await prisma.user.create({
+    data: {
+      name: parsed.data.name,
+      email: parsed.data.email,
+      passwordHash,
+      role: "ADMIN",
+    },
+  });
+
+  await signIn("credentials", {
+    email: parsed.data.email,
+    password: parsed.data.password,
+    redirectTo: "/dashboard",
+  });
+
+  return null;
+}
+
+export async function login(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = loginSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
+  if (!parsed.success) {
+    return { error: "Enter a valid email and password." };
+  }
+
+  try {
+    await signIn("credentials", {
+      email: parsed.data.email,
+      password: parsed.data.password,
+      redirectTo: "/dashboard",
+    });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return { error: "Invalid email or password." };
+    }
+    throw error;
+  }
+
+  return null;
+}
+
+export async function createUser(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const session = await auth();
+  if (session?.user.role !== "ADMIN") {
+    return { error: "Only admins can add household members." };
+  }
+
+  const parsed = createUserSchema.safeParse({
+    name: formData.get("name"),
+    email: formData.get("email"),
+    password: formData.get("password"),
+    role: formData.get("role") || "MEMBER",
+  });
+  if (!parsed.success) {
+    return { error: firstIssueMessage(parsed.error) };
+  }
+
+  const existing = await prisma.user.findUnique({
+    where: { email: parsed.data.email },
+  });
+  if (existing) {
+    return { error: "A user with that email already exists." };
+  }
+
+  const passwordHash = await bcrypt.hash(parsed.data.password, 12);
+  await prisma.user.create({
+    data: {
+      name: parsed.data.name,
+      email: parsed.data.email,
+      passwordHash,
+      role: parsed.data.role,
+    },
+  });
+
+  revalidatePath("/settings/users");
+  return { success: `${parsed.data.name} was added.` };
+}
+
+export async function deleteUser(userId: string): Promise<ActionState> {
+  const session = await auth();
+  if (session?.user.role !== "ADMIN") {
+    return { error: "Only admins can remove household members." };
+  }
+  if (session.user.id === userId) {
+    return { error: "You can't remove your own account." };
+  }
+
+  const target = await prisma.user.findUnique({ where: { id: userId } });
+  if (!target) return { error: "User not found." };
+
+  if (target.role === "ADMIN") {
+    const adminCount = await prisma.user.count({ where: { role: "ADMIN" } });
+    if (adminCount <= 1) {
+      return { error: "At least one admin must remain." };
+    }
+  }
+
+  await prisma.user.delete({ where: { id: userId } });
+  revalidatePath("/settings/users");
+  return { success: "User removed." };
+}
+
+export async function updateNotificationPreferences(formData: FormData): Promise<void> {
+  const session = await auth();
+  if (!session?.user) return;
+
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { emailReminders: formData.get("emailReminders") === "on" },
+  });
+  revalidatePath("/settings");
+}
+
+export async function changePassword(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const session = await auth();
+  if (!session?.user) return { error: "Not signed in." };
+
+  const parsed = changePasswordSchema.safeParse({
+    currentPassword: formData.get("currentPassword"),
+    newPassword: formData.get("newPassword"),
+  });
+  if (!parsed.success) {
+    return { error: firstIssueMessage(parsed.error) };
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+  if (!user) return { error: "User not found." };
+
+  const valid = await bcrypt.compare(parsed.data.currentPassword, user.passwordHash);
+  if (!valid) return { error: "Current password is incorrect." };
+
+  const passwordHash = await bcrypt.hash(parsed.data.newPassword, 12);
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { passwordHash },
+  });
+
+  return { success: "Password updated." };
+}
+
+export async function logout() {
+  await signOut({ redirectTo: "/login" });
+}
