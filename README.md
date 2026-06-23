@@ -53,6 +53,68 @@ container start, and serves it on port 3000. The SQLite database
 the host, mounted into the container — back up that directory to back up
 everything.
 
+## Locking down access with nginx + mTLS
+
+Since this app stores sensitive personal/financial data, you can put it
+behind nginx with mutual TLS (mTLS): nginx terminates HTTPS and requires
+every client to present a certificate signed by your own private CA, so
+anyone without an issued certificate is rejected before the request ever
+reaches the app — there's no app-level login page to even attack.
+
+An example nginx server block is in
+[`deploy/nginx/contracts-mtls.conf.example`](deploy/nginx/contracts-mtls.conf.example).
+It expects the app reachable at `127.0.0.1:3000`, so bind the container's
+port to localhost only in `docker-compose.yml` rather than publishing it
+on all interfaces:
+
+```yaml
+    ports:
+      - "127.0.0.1:3000:3000"
+```
+
+(If nginx runs in a different container/host than Docker, instead put
+the app on a shared Docker network and remove the host port mapping
+entirely, proxying to the service name instead of `127.0.0.1`.)
+
+**1. Create a private CA** (once) — this signs client certificates, and is
+separate from your server's TLS certificate (e.g. from Let's Encrypt):
+
+```bash
+openssl genrsa -out ca.key 4096
+openssl req -x509 -new -nodes -key ca.key -sha256 -days 3650 \
+  -subj "/CN=Contracts Client CA" -out client-ca.crt
+```
+
+Copy `client-ca.crt` to the path referenced by `ssl_client_certificate` in
+the nginx config. Keep `ca.key` somewhere safe and offline — it's what
+lets you issue new client certificates later.
+
+**2. Issue a client certificate** for each person/device allowed to connect:
+
+```bash
+openssl genrsa -out client.key 4096
+openssl req -new -key client.key -subj "/CN=your-name" -out client.csr
+openssl x509 -req -in client.csr -CA client-ca.crt -CAkey ca.key \
+  -CAcreateserial -out client.crt -days 825 -sha256
+
+# Bundle into a .p12 to import into a browser or OS keychain
+openssl pkcs12 -export -out client.p12 -inkey client.key -in client.crt \
+  -certfile client-ca.crt
+```
+
+Import `client.p12` into the browser/device that should have access (it
+will prompt for the certificate when visiting the site). Revoking access
+for a device is just not reissuing/renewing its certificate, or maintaining
+a CRL if you need to revoke before expiry.
+
+**3. Set these env vars** so the app behaves correctly behind a reverse
+proxy:
+
+```bash
+APP_URL=https://contracts.example.com
+AUTH_TRUST_HOST=true   # required so NextAuth trusts the proxied Host header
+```
+
 ## Configuration
 
 All configuration is via environment variables — see [`.env.example`](.env.example)
@@ -66,6 +128,7 @@ for the full list with defaults. Notable ones:
 | `NTFY_TOPIC` | Set to enable push reminders via ntfy. |
 | `REMINDER_CRON_SCHEDULE` | When the built-in scheduler checks for expiring contracts (cron syntax, default daily at 08:00). |
 | `CRON_SECRET` | Optional. If set, enables `POST /api/cron` (with header `x-cron-secret`) so an external scheduler can trigger the check instead of/alongside the built-in one. |
+| `AUTH_TRUST_HOST` | Set to `true` when running behind a reverse proxy (e.g. nginx) — see "Locking down access with nginx + mTLS" above. |
 
 If neither email nor ntfy is configured, the scheduler runs but sends nothing
 (no errors).
