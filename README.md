@@ -123,6 +123,69 @@ APP_URL=https://contracts.example.com
 AUTH_TRUST_HOST=true   # required so NextAuth trusts the proxied Host header
 ```
 
+## Querying contracts from an LLM (MCP)
+
+The app can expose a read-only [MCP](https://modelcontextprotocol.io) server
+at `/api/mcp` so a local LLM agent — e.g. [Ollama](https://ollama.com) running
+a tool-calling model like Hermes — can answer questions about your contracts
+in natural language ("what's renewing this month?", "how much am I spending
+on insurance?").
+
+It's disabled by default. Set `MCP_TOKEN` in `.env` (any random string, e.g.
+from `openssl rand -base64 32`) to enable it — requests must send it as
+`Authorization: Bearer <token>`. Leaving it unset makes the endpoint 404,
+same as `CRON_SECRET`/`/api/cron`.
+
+The server exposes five tools, all read-only — they never modify data and
+never return account credentials or uploaded document file contents (only
+document metadata: filename, type, size):
+
+| Tool | Purpose |
+| --- | --- |
+| `list_contracts` | List contracts, optionally filtered by status and/or category. |
+| `get_contract` | Full details for one contract by id, including document metadata. |
+| `search_contracts` | Case-insensitive search across title, provider, contract number, and notes. |
+| `upcoming_renewals` | Active contracts ending within N days (default 30), soonest first. |
+| `spend_summary` | Estimated total and per-category monthly spend across active contracts. |
+
+Point your MCP client at `http://<host>:3000/api/mcp` with the bearer token.
+For a tool that speaks MCP-over-HTTP directly, a config block looks like:
+
+```json
+{
+  "mcpServers": {
+    "contracts": {
+      "url": "http://<host>:3000/api/mcp",
+      "headers": { "Authorization": "Bearer <your MCP_TOKEN>" }
+    }
+  }
+}
+```
+
+If your agent only speaks stdio-based MCP servers (common for local
+Ollama tool-calling setups), bridge it with
+[`mcp-remote`](https://github.com/geelen/mcp-remote) instead:
+
+```json
+{
+  "mcpServers": {
+    "contracts": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "http://<host>:3000/api/mcp",
+        "--header",
+        "Authorization: Bearer <your MCP_TOKEN>"
+      ]
+    }
+  }
+}
+```
+
+Adjust the exact syntax for whatever client/agent you're running — the
+endpoint itself is a standard streamable-HTTP MCP server, so anything that
+speaks MCP over HTTP (or can be bridged to it) will work.
+
 ## Configuration
 
 All configuration is via environment variables — see [`.env.example`](.env.example)
@@ -137,6 +200,7 @@ for the full list with defaults. Notable ones:
 | `REMINDER_CRON_SCHEDULE` | When the built-in scheduler checks for expiring contracts (cron syntax, default daily at 08:00). |
 | `CRON_SECRET` | Optional. If set, enables `POST /api/cron` (with header `x-cron-secret`) so an external scheduler can trigger the check instead of/alongside the built-in one. |
 | `AUTH_TRUST_HOST` | Set to `true` when running behind a reverse proxy (e.g. nginx) — see "Locking down access with nginx + mTLS" above. |
+| `MCP_TOKEN` | Optional. If set, enables `GET/POST /api/mcp`, a read-only MCP server for querying contracts from an LLM agent — see "Querying contracts from an LLM (MCP)" above. |
 
 If neither email nor ntfy is configured, the scheduler runs but sends nothing
 (no errors).
