@@ -6,10 +6,6 @@ import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/components/nav-items";
 
 function isActive(href: string, pathname: string) {
-  if (href === "/contracts/new") return pathname.startsWith("/contracts/new");
-  if (href === "/contracts") {
-    return pathname.startsWith("/contracts") && !pathname.startsWith("/contracts/new");
-  }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 

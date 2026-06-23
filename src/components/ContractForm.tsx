@@ -1,6 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef, useState } from "react";
+import type { ChangeEvent } from "react";
+import { Upload } from "lucide-react";
 import type { ContractModel } from "@/generated/prisma/models";
 import type { ActionState } from "@/lib/actions/contracts";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -16,6 +18,22 @@ function toDateInputValue(date: Date | null | undefined) {
   return new Date(date).toISOString().slice(0, 10);
 }
 
+type ExtractedFields = Partial<
+  Record<
+    | "title"
+    | "provider"
+    | "contractNumber"
+    | "startDate"
+    | "endDate"
+    | "cost"
+    | "billingFrequency"
+    | "contactName"
+    | "contactPhone"
+    | "contactEmail",
+    string
+  >
+>;
+
 export function ContractForm({
   action,
   contract,
@@ -24,12 +42,98 @@ export function ContractForm({
   contract?: ContractModel;
 }) {
   const [state, formAction] = useActionState<ActionState, FormData>(action, null);
+  const [scanning, setScanning] = useState(false);
+  const [scanMessage, setScanMessage] = useState<string | null>(null);
+
+  const titleRef = useRef<HTMLInputElement>(null);
+  const providerRef = useRef<HTMLInputElement>(null);
+  const contractNumberRef = useRef<HTMLInputElement>(null);
+  const startDateRef = useRef<HTMLInputElement>(null);
+  const endDateRef = useRef<HTMLInputElement>(null);
+  const costRef = useRef<HTMLInputElement>(null);
+  const billingFrequencyRef = useRef<HTMLSelectElement>(null);
+  const contactNameRef = useRef<HTMLInputElement>(null);
+  const contactPhoneRef = useRef<HTMLInputElement>(null);
+  const contactEmailRef = useRef<HTMLInputElement>(null);
+
+  function applyExtractedFields(fields: ExtractedFields) {
+    if (fields.title && titleRef.current && !titleRef.current.value) {
+      titleRef.current.value = fields.title;
+    }
+    if (fields.provider && providerRef.current) providerRef.current.value = fields.provider;
+    if (fields.contractNumber && contractNumberRef.current) {
+      contractNumberRef.current.value = fields.contractNumber;
+    }
+    if (fields.startDate && startDateRef.current) startDateRef.current.value = fields.startDate;
+    if (fields.endDate && endDateRef.current) endDateRef.current.value = fields.endDate;
+    if (fields.cost && costRef.current) costRef.current.value = fields.cost;
+    if (fields.billingFrequency && billingFrequencyRef.current) {
+      billingFrequencyRef.current.value = fields.billingFrequency;
+    }
+    if (fields.contactName && contactNameRef.current) {
+      contactNameRef.current.value = fields.contactName;
+    }
+    if (fields.contactPhone && contactPhoneRef.current) {
+      contactPhoneRef.current.value = fields.contactPhone;
+    }
+    if (fields.contactEmail && contactEmailRef.current) {
+      contactEmailRef.current.value = fields.contactEmail;
+    }
+  }
+
+  async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setScanning(true);
+    setScanMessage(null);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const res = await fetch("/api/documents/extract", { method: "POST", body });
+      if (!res.ok) throw new Error("Extraction failed");
+
+      const { fields } = (await res.json()) as { fields: ExtractedFields };
+      if (Object.keys(fields).length === 0) {
+        setScanMessage("Couldn't detect any fields from this document — fill them in manually.");
+      } else {
+        applyExtractedFields(fields);
+        setScanMessage("Fields populated from the document — review before saving.");
+      }
+    } catch {
+      setScanMessage("Couldn't scan this document. You can still attach it and fill in fields manually.");
+    } finally {
+      setScanning(false);
+    }
+  }
 
   return (
     <form action={formAction} className="space-y-6">
+      {!contract && (
+        <div className="space-y-2 rounded-xl border border-dashed border-border p-4">
+          <label htmlFor="file" className="flex items-center gap-2 text-sm font-medium">
+            <Upload size={16} />
+            Upload a document to auto-fill fields (optional)
+          </label>
+          <input
+            type="file"
+            id="file"
+            name="file"
+            accept=".pdf,.doc,.docx,image/*"
+            onChange={handleFileChange}
+            className="text-sm"
+          />
+          {scanning && <p className="text-sm text-foreground/60">Scanning document…</p>}
+          {!scanning && scanMessage && (
+            <p className="text-sm text-foreground/60">{scanMessage}</p>
+          )}
+        </div>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2">
         <Field label="Title" htmlFor="title">
           <input
+            ref={titleRef}
             id="title"
             name="title"
             required
@@ -57,6 +161,7 @@ export function ContractForm({
 
         <Field label="Provider / Company" htmlFor="provider">
           <input
+            ref={providerRef}
             id="provider"
             name="provider"
             required
@@ -68,6 +173,7 @@ export function ContractForm({
 
         <Field label="Contract / policy number" htmlFor="contractNumber">
           <input
+            ref={contractNumberRef}
             id="contractNumber"
             name="contractNumber"
             defaultValue={contract?.contractNumber ?? ""}
@@ -77,6 +183,7 @@ export function ContractForm({
 
         <Field label="Start date" htmlFor="startDate">
           <input
+            ref={startDateRef}
             id="startDate"
             name="startDate"
             type="date"
@@ -87,6 +194,7 @@ export function ContractForm({
 
         <Field label="End date" htmlFor="endDate">
           <input
+            ref={endDateRef}
             id="endDate"
             name="endDate"
             type="date"
@@ -124,6 +232,7 @@ export function ContractForm({
 
         <Field label="Cost" htmlFor="cost">
           <input
+            ref={costRef}
             id="cost"
             name="cost"
             type="number"
@@ -146,6 +255,7 @@ export function ContractForm({
 
         <Field label="Billing frequency" htmlFor="billingFrequency">
           <select
+            ref={billingFrequencyRef}
             id="billingFrequency"
             name="billingFrequency"
             defaultValue={contract?.billingFrequency ?? ""}
@@ -182,6 +292,7 @@ export function ContractForm({
         <div className="grid gap-4 md:grid-cols-3">
           <Field label="Contact name" htmlFor="contactName">
             <input
+              ref={contactNameRef}
               id="contactName"
               name="contactName"
               defaultValue={contract?.contactName ?? ""}
@@ -190,6 +301,7 @@ export function ContractForm({
           </Field>
           <Field label="Contact phone" htmlFor="contactPhone">
             <input
+              ref={contactPhoneRef}
               id="contactPhone"
               name="contactPhone"
               defaultValue={contract?.contactPhone ?? ""}
@@ -198,6 +310,7 @@ export function ContractForm({
           </Field>
           <Field label="Contact email" htmlFor="contactEmail">
             <input
+              ref={contactEmailRef}
               id="contactEmail"
               name="contactEmail"
               type="email"

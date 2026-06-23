@@ -25,6 +25,25 @@ async function requireUser() {
   return session.user;
 }
 
+async function attachDocument(contractId: string, file: File): Promise<ActionState | null> {
+  if (file.size > MAX_UPLOAD_BYTES) return { error: "File is too large (15MB max)." };
+  if (!ALLOWED_MIME_TYPES.has(file.type)) {
+    return { error: "Unsupported file type. Use PDF, Word, or image files." };
+  }
+
+  const { storedName, size } = await saveDocument(contractId, file);
+  await prisma.document.create({
+    data: {
+      contractId,
+      filename: file.name.slice(0, 255),
+      storedName,
+      mimeType: file.type,
+      size,
+    },
+  });
+  return null;
+}
+
 function formToContractInput(formData: FormData) {
   return {
     title: formData.get("title"),
@@ -58,9 +77,21 @@ export async function createContract(
     return { error: firstIssueMessage(parsed.error) };
   }
 
+  const file = formData.get("file");
+  if (file instanceof File && file.size > 0) {
+    if (file.size > MAX_UPLOAD_BYTES) return { error: "File is too large (15MB max)." };
+    if (!ALLOWED_MIME_TYPES.has(file.type)) {
+      return { error: "Unsupported file type. Use PDF, Word, or image files." };
+    }
+  }
+
   const contract = await prisma.contract.create({
     data: { ...parsed.data, createdById: user.id },
   });
+
+  if (file instanceof File && file.size > 0) {
+    await attachDocument(contract.id, file);
+  }
 
   revalidatePath("/contracts");
   revalidatePath("/dashboard");
@@ -126,27 +157,12 @@ export async function addDocument(
   if (!(file instanceof File) || file.size === 0) {
     return { error: "Choose a file to upload." };
   }
-  if (file.size > MAX_UPLOAD_BYTES) {
-    return { error: "File is too large (15MB max)." };
-  }
-  if (!ALLOWED_MIME_TYPES.has(file.type)) {
-    return { error: "Unsupported file type. Use PDF, Word, or image files." };
-  }
 
   const contract = await prisma.contract.findUnique({ where: { id: contractId } });
   if (!contract) return { error: "Contract not found." };
 
-  const { storedName, size } = await saveDocument(contractId, file);
-
-  await prisma.document.create({
-    data: {
-      contractId,
-      filename: file.name.slice(0, 255),
-      storedName,
-      mimeType: file.type,
-      size,
-    },
-  });
+  const error = await attachDocument(contractId, file);
+  if (error) return error;
 
   revalidatePath(`/contracts/${contractId}`);
   return { success: "Document uploaded." };

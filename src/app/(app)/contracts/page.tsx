@@ -34,7 +34,7 @@ export default async function ContractsPage({
         <h1 className="text-2xl font-semibold">Contracts</h1>
         <Link
           href="/contracts/new"
-          className="hidden items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90 md:flex"
+          className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
         >
           <Plus size={16} />
           Add contract

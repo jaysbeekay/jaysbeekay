@@ -16,6 +16,10 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
+# tesseract-ocr + poppler-utils power document OCR/text-extraction for the
+# "auto-fill from document" feature (see src/lib/documents).
+RUN apk add --no-cache tesseract-ocr tesseract-ocr-data-eng poppler-utils
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/prisma ./prisma

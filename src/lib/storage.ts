@@ -19,6 +19,10 @@ function contractDir(contractId: string) {
   return path.join(path.resolve(env.uploadsDir), contractId);
 }
 
+function productDir(productId: string) {
+  return path.join(path.resolve(env.uploadsDir), "products", productId);
+}
+
 // storedName is always a freshly generated UUID plus a sanitized extension,
 // never derived from the user-supplied filename, to avoid path traversal.
 function safeExtension(filename: string) {
@@ -51,4 +55,31 @@ export async function deleteDocument(contractId: string, storedName: string) {
 
 export async function deleteContractDir(contractId: string) {
   await fs.rm(contractDir(contractId), { recursive: true, force: true });
+}
+
+export async function saveProductDocument(productId: string, file: File) {
+  const dir = productDir(productId);
+  await fs.mkdir(dir, { recursive: true });
+
+  const storedName = `${randomUUID()}${safeExtension(file.name)}`;
+  const fullPath = path.join(dir, storedName);
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  await fs.writeFile(fullPath, buffer);
+
+  return { storedName, size: buffer.byteLength };
+}
+
+export async function readProductDocument(productId: string, storedName: string) {
+  const fullPath = path.join(productDir(productId), storedName);
+  return fs.readFile(fullPath);
+}
+
+export async function deleteProductDocument(productId: string, storedName: string) {
+  const fullPath = path.join(productDir(productId), storedName);
+  await fs.rm(fullPath, { force: true });
+}
+
+export async function deleteProductDir(productId: string) {
+  await fs.rm(productDir(productId), { recursive: true, force: true });
 }

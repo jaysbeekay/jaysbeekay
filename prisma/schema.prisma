@@ -51,6 +51,13 @@ enum NotificationChannel {
   NTFY
 }
 
+enum ProductDocumentKind {
+  INVOICE
+  PHOTO
+  MANUAL
+  OTHER
+}
+
 model User {
   id             String    @id @default(cuid())
   name           String
@@ -60,6 +67,7 @@ model User {
   emailReminders Boolean   @default(true)
   createdAt      DateTime  @default(now())
   contracts      Contract[]
+  products       Product[]
 
   @@map("users")
 }
@@ -119,4 +127,55 @@ model NotificationLog {
 
   @@unique([contractId, channel, thresholdDays])
   @@map("notification_logs")
+}
+
+model Product {
+  id                 String    @id @default(cuid())
+  name               String
+  manufacturer       String?
+  vendor             String?
+  serialNumber       String?
+  purchaseDate       DateTime?
+  warrantyEndDate    DateTime?
+  price              Float?
+  currency           String    @default("AUD")
+  notes              String?
+  reminderDaysBefore String?   @default("30,14,7,1")
+
+  createdById        String
+  createdBy          User      @relation(fields: [createdById], references: [id])
+
+  documents          ProductDocument[]
+  notifications      ProductNotificationLog[]
+
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@map("products")
+}
+
+model ProductDocument {
+  id         String              @id @default(cuid())
+  productId  String
+  product    Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  filename   String
+  storedName String
+  mimeType   String
+  size       Int
+  kind       ProductDocumentKind @default(OTHER)
+  uploadedAt DateTime            @default(now())
+
+  @@map("product_documents")
+}
+
+model ProductNotificationLog {
+  id            String              @id @default(cuid())
+  productId     String
+  product       Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  channel       NotificationChannel
+  thresholdDays Int
+  sentAt        DateTime            @default(now())
+
+  @@unique([productId, channel, thresholdDays])
+  @@map("product_notification_logs")
 }

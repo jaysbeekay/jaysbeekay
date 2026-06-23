@@ -66,8 +66,9 @@ export async function runExpirationCheck(now: Date = new Date()) {
             recipientEmails.map((to) =>
               sendReminderEmail({
                 to,
-                contractTitle: contract.title,
-                provider: contract.provider,
+                kind: "contract",
+                title: contract.title,
+                detail: contract.provider,
                 daysRemaining: remaining,
                 endDate: contract.endDate as Date,
               }),
@@ -75,8 +76,9 @@ export async function runExpirationCheck(now: Date = new Date()) {
           );
         } else {
           await sendNtfyReminder({
-            contractTitle: contract.title,
-            provider: contract.provider,
+            kind: "contract",
+            title: contract.title,
+            detail: contract.provider,
             daysRemaining: remaining,
             endDate: contract.endDate,
           });
@@ -95,5 +97,73 @@ export async function runExpirationCheck(now: Date = new Date()) {
     }
   }
 
-  return { checked: contracts.length, sent: sentCount };
+  const products = await prisma.product.findMany({
+    where: { warrantyEndDate: { not: null } },
+    include: { notifications: true },
+  });
+
+  for (const product of products) {
+    if (!product.warrantyEndDate) continue;
+    const remaining = daysRemaining(product.warrantyEndDate, now);
+    if (remaining < 0) continue;
+
+    const thresholds = parseThresholds(product.reminderDaysBefore);
+    const dueThresholds = thresholds.filter((t) => remaining <= t);
+    if (dueThresholds.length === 0) continue;
+
+    const channels: NotificationChannel[] = [
+      ...(emailEnabled && recipientEmails.length > 0 ? (["EMAIL"] as const) : []),
+      ...(ntfyEnabled ? (["NTFY"] as const) : []),
+    ];
+
+    for (const channel of channels) {
+      const loggedThresholds = new Set(
+        product.notifications
+          .filter((n) => n.channel === channel)
+          .map((n) => n.thresholdDays),
+      );
+      const unlogged = dueThresholds.filter((t) => !loggedThresholds.has(t));
+      if (unlogged.length === 0) continue;
+
+      const threshold = Math.min(...unlogged);
+      const detail = product.manufacturer ?? product.vendor ?? "";
+
+      try {
+        if (channel === "EMAIL") {
+          await Promise.all(
+            recipientEmails.map((to) =>
+              sendReminderEmail({
+                to,
+                kind: "warranty",
+                title: product.name,
+                detail,
+                daysRemaining: remaining,
+                endDate: product.warrantyEndDate as Date,
+              }),
+            ),
+          );
+        } else {
+          await sendNtfyReminder({
+            kind: "warranty",
+            title: product.name,
+            detail,
+            daysRemaining: remaining,
+            endDate: product.warrantyEndDate,
+          });
+        }
+
+        await prisma.productNotificationLog.create({
+          data: { productId: product.id, channel, thresholdDays: threshold },
+        });
+        sentCount += 1;
+      } catch (error) {
+        console.error(
+          `[notifications] failed to send ${channel} reminder for product ${product.id}:`,
+          error,
+        );
+      }
+    }
+  }
+
+  return { checked: contracts.length + products.length, sent: sentCount };
 }

@@ -5,8 +5,9 @@ function stripNewlines(value: string) {
 }
 
 export async function sendNtfyReminder(opts: {
-  contractTitle: string;
-  provider: string;
+  kind: "contract" | "warranty";
+  title: string;
+  detail: string;
   daysRemaining: number;
   endDate: Date;
 }) {
@@ -21,7 +22,7 @@ export async function sendNtfyReminder(opts: {
 
   const headers: Record<string, string> = {
     Title: stripNewlines(
-      `${opts.contractTitle} expires in ${opts.daysRemaining} day${
+      `${opts.title} expires in ${opts.daysRemaining} day${
         opts.daysRemaining === 1 ? "" : "s"
       }`,
     ),
@@ -35,7 +36,7 @@ export async function sendNtfyReminder(opts: {
   const response = await fetch(url, {
     method: "POST",
     headers,
-    body: `${opts.provider} contract expires on ${formattedDate}.`,
+    body: `${opts.detail ? `${opts.detail} ` : ""}${opts.kind} expires on ${formattedDate}.`,
   });
 
   if (!response.ok) {
