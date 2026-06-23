@@ -1,6 +1,6 @@
 services:
   app:
-    build: .
+    image: jaysbeekay/contracts:latest
     ports:
       - "3000:3000"
     environment:
@@ -21,6 +21,7 @@ services:
       NTFY_TOPIC: ${NTFY_TOPIC:-}
       NTFY_TOKEN: ${NTFY_TOKEN:-}
       CRON_SECRET: ${CRON_SECRET:-}
+      MCP_TOKEN: ${MCP_TOKEN:-}
     volumes:
       - ./data:/app/data
     restart: unless-stopped
