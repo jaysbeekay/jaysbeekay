@@ -3,6 +3,8 @@ import { FileSignature } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { SetupForm } from "@/components/SetupForm";
 
+export const dynamic = "force-dynamic";
+
 export default async function SetupPage() {
   const userCount = await prisma.user.count();
   if (userCount > 0) {
