@@ -7,7 +7,9 @@ insurance, subscriptions, loans, and more — with reminders before they expire.
 
 - Track contracts with provider, dates, cost/billing frequency, renewal type,
   notice period, contact details, and free-form notes
-- Attach documents (PDF/images/Word docs) to each contract
+- Attach documents (PDF/images/Word docs) to each contract — uploading a PDF
+  or photo when creating a contract auto-fills fields like provider, dates,
+  cost, and contract/policy number
 - Dashboard with active/expiring/expired counts and estimated monthly spend
 - Configurable reminder thresholds per contract (e.g. 30/14/7/1 days before expiry)
 - Reminders via email (SMTP) and/or push notifications ([ntfy](https://ntfy.sh))
@@ -186,6 +188,34 @@ Adjust the exact syntax for whatever client/agent you're running — the
 endpoint itself is a standard streamable-HTTP MCP server, so anything that
 speaks MCP over HTTP (or can be bridged to it) will work.
 
+## Auto-filling fields from a document
+
+When adding a new contract, you can upload a document first (PDF or photo of
+a bill/policy/lease) and the form fields — provider, contract/policy number,
+start/end dates, cost, billing frequency, contact details — fill in
+automatically. Review and correct anything before saving; the document is
+attached to the contract once you do.
+
+Extraction runs entirely locally, in two stages:
+
+1. **Text extraction**: PDFs with a text layer are read directly
+   (`pdftotext`); scanned PDFs and photos are rasterized and OCR'd
+   (`pdftoppm` + `tesseract`). Word docs (`.doc`/`.docx`) are attached as-is
+   without auto-fill — there's no plain-text layer to extract from those
+   formats the same way.
+2. **Field extraction**: regex/label heuristics try to pick out dates,
+   amounts, account/policy numbers, and contact details from the extracted
+   text. If too few fields are found — e.g. a messy scan or unusual layout —
+   and `OLLAMA_BASE_URL`/`OLLAMA_MODEL` are set, the text is sent to your
+   Ollama server with a prompt asking it to return the same fields as JSON,
+   and any fields it finds fill in the gaps.
+
+The Ollama fallback is optional and off by default (heuristics-only). If
+your app container can't resolve `localhost` to your host machine's Ollama
+instance, point `OLLAMA_BASE_URL` at the host's LAN IP or
+`http://host.docker.internal:11434` instead. No document text or extracted
+fields are ever sent anywhere else — only to the Ollama server you configure.
+
 ## Configuration
 
 All configuration is via environment variables — see [`.env.example`](.env.example)
@@ -201,6 +231,7 @@ for the full list with defaults. Notable ones:
 | `CRON_SECRET` | Optional. If set, enables `POST /api/cron` (with header `x-cron-secret`) so an external scheduler can trigger the check instead of/alongside the built-in one. |
 | `AUTH_TRUST_HOST` | Set to `true` when running behind a reverse proxy (e.g. nginx) — see "Locking down access with nginx + mTLS" above. |
 | `MCP_TOKEN` | Optional. If set, enables `GET/POST /api/mcp`, a read-only MCP server for querying contracts from an LLM agent — see "Querying contracts from an LLM (MCP)" above. |
+| `OLLAMA_BASE_URL` / `OLLAMA_MODEL` | Optional. Set both to enable the local-LLM fallback for document auto-fill when heuristics can't confidently parse a scan — see "Auto-filling fields from a document" above. |
 
 If neither email nor ntfy is configured, the scheduler runs but sends nothing
 (no errors).

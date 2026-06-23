@@ -20,7 +20,12 @@ export const env = {
     topic: optional("NTFY_TOPIC"),
     token: optional("NTFY_TOKEN"),
   },
+  ollama: {
+    baseUrl: optional("OLLAMA_BASE_URL"),
+    model: optional("OLLAMA_MODEL"),
+  },
 };
 
 export const isEmailConfigured = () => Boolean(env.smtp.host && env.smtp.user);
 export const isNtfyConfigured = () => Boolean(env.ntfy.url && env.ntfy.topic);
+export const isOllamaConfigured = () => Boolean(env.ollama.baseUrl && env.ollama.model);
