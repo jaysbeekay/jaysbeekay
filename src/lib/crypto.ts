@@ -33,3 +33,22 @@ export function decryptSecret(encrypted: string): string {
   ]);
   return plaintext.toString("utf8");
 }
+
+// Stored as iv || authTag || ciphertext, concatenated raw, for larger binary
+// payloads (e.g. database backups) where base64 string overhead is wasteful.
+export function encryptBuffer(plaintext: Buffer): Buffer {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv(ALGORITHM, getKey(), iv);
+  const ciphertext = Buffer.concat([cipher.update(plaintext), cipher.final()]);
+  const authTag = cipher.getAuthTag();
+  return Buffer.concat([iv, authTag, ciphertext]);
+}
+
+export function decryptBuffer(encrypted: Buffer): Buffer {
+  const iv = encrypted.subarray(0, 12);
+  const authTag = encrypted.subarray(12, 28);
+  const ciphertext = encrypted.subarray(28);
+  const decipher = createDecipheriv(ALGORITHM, getKey(), iv);
+  decipher.setAuthTag(authTag);
+  return Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+}
