@@ -26,6 +26,18 @@ reminders before either expires.
 - Mobile-friendly responsive UI, installable as a PWA ("Add to Home Screen")
 - SQLite storage — a single file, easy to back up, no separate database service
 
+## Screenshots
+
+*(Sample data shown — not a real account.)*
+
+| Dashboard | Contracts |
+| --- | --- |
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Contracts list](docs/screenshots/contracts-list.png) |
+
+| Contract detail |
+| --- |
+| ![Contract detail](docs/screenshots/contract-detail.png) |
+
 ## Tech stack
 
 Next.js (App Router) + TypeScript, Prisma 7 (SQLite via `@prisma/adapter-libsql`),
