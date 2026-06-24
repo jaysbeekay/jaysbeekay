@@ -308,6 +308,14 @@ keyless trial endpoint (rate-limited per IP) to look up the product; set
 higher-limit endpoint instead. Leaving lookup disabled still lets you scan
 and save the barcode — it just won't auto-fill anything from it.
 
+## Native iOS app
+
+There's a thin native iOS wrapper in `ios/` (built with
+[Capacitor](https://capacitorjs.com)) that points at your self-hosted server
+and adds camera permissions and client-certificate import for mTLS setups.
+See [README-ios.md](README-ios.md) — note that it's written but not yet
+built/tested in Xcode.
+
 ## Configuration
 
 All configuration is via environment variables — see [`.env.example`](.env.example)
