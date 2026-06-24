@@ -24,8 +24,13 @@ export const env = {
     baseUrl: optional("OLLAMA_BASE_URL"),
     model: optional("OLLAMA_MODEL"),
   },
+  barcodeLookup: {
+    enabled: optional("BARCODE_LOOKUP_ENABLED", "false") === "true",
+    apiKey: optional("BARCODE_LOOKUP_API_KEY"),
+  },
 };
 
 export const isEmailConfigured = () => Boolean(env.smtp.host && env.smtp.user);
 export const isNtfyConfigured = () => Boolean(env.ntfy.url && env.ntfy.topic);
 export const isOllamaConfigured = () => Boolean(env.ollama.baseUrl && env.ollama.model);
+export const isBarcodeLookupConfigured = () => env.barcodeLookup.enabled;

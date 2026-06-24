@@ -24,6 +24,8 @@ services:
       MCP_TOKEN: ${MCP_TOKEN:-}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-}
+      BARCODE_LOOKUP_ENABLED: ${BARCODE_LOOKUP_ENABLED:-}
+      BARCODE_LOOKUP_API_KEY: ${BARCODE_LOOKUP_API_KEY:-}
     volumes:
       - ./data:/app/data
     restart: unless-stopped

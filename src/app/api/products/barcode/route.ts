@@ -1,0 +1,32 @@
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { isBarcodeLookupConfigured } from "@/lib/env";
+import { isValidBarcode, lookupBarcode } from "@/lib/barcodeLookup";
+
+// Looks up a scanned barcode against an online product database to
+// pre-fill fields when adding a new product. Nothing is persisted here —
+// the barcode itself is saved when the product form is submitted.
+export async function GET(request: NextRequest) {
+  if (!isBarcodeLookupConfigured()) {
+    return NextResponse.json(
+      { error: "Set BARCODE_LOOKUP_ENABLED to enable this endpoint" },
+      { status: 404 },
+    );
+  }
+
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const code = request.nextUrl.searchParams.get("code")?.trim() ?? "";
+  if (!isValidBarcode(code)) {
+    return NextResponse.json({ error: "Invalid barcode." }, { status: 400 });
+  }
+
+  const fields = await lookupBarcode(code);
+  if (!fields) {
+    return NextResponse.json({ fields: {}, found: false });
+  }
+  return NextResponse.json({ fields, found: true });
+}

@@ -41,3 +41,13 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Sync Docker Hub overview with README
+        if: github.ref == 'refs/heads/main'
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: jaysbeekay/contracts
+          readme-filepath: ./README.md
+          short-description: "Self-hosted contract & warranty tracker with expiry reminders"

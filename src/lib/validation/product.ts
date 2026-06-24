@@ -8,6 +8,7 @@ export const productSchema = z.object({
   manufacturer: z.preprocess(emptyToUndefined, z.string().trim().max(200).optional()),
   vendor: z.preprocess(emptyToUndefined, z.string().trim().max(200).optional()),
   serialNumber: z.preprocess(emptyToUndefined, z.string().trim().max(100).optional()),
+  barcode: z.preprocess(emptyToUndefined, z.string().trim().max(64).optional()),
   purchaseDate: z.preprocess(emptyToUndefined, z.coerce.date().optional()),
   warrantyEndDate: z.preprocess(emptyToUndefined, z.coerce.date().optional()),
   price: z.preprocess(emptyToUndefined, z.coerce.number().min(0).optional()),
