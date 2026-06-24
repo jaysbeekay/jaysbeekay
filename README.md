@@ -1,4 +1,4 @@
-# Contracts
+# Personal Document Management
 
 A self-hostable web app for tracking personal contracts — rentals, car/home/strata
 insurance, subscriptions, loans, and more — and product warranties, with
