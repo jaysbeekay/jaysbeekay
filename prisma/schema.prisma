@@ -58,16 +58,25 @@ enum ProductDocumentKind {
   OTHER
 }
 
+enum AiProvider {
+  ANTHROPIC
+  GEMINI
+  OPENAI
+}
+
 model User {
-  id             String    @id @default(cuid())
-  name           String
-  email          String    @unique
-  passwordHash   String
-  role           Role      @default(MEMBER)
-  emailReminders Boolean   @default(true)
-  createdAt      DateTime  @default(now())
-  contracts      Contract[]
-  products       Product[]
+  id                String     @id @default(cuid())
+  name              String
+  email             String     @unique
+  passwordHash      String
+  role              Role       @default(MEMBER)
+  emailReminders    Boolean    @default(true)
+  aiProvider        AiProvider?
+  aiApiKeyEncrypted String?
+  aiModel           String?
+  createdAt         DateTime   @default(now())
+  contracts         Contract[]
+  products          Product[]
 
   @@map("users")
 }

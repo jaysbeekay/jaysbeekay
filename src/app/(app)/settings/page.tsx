@@ -3,8 +3,9 @@ import { Users } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { updateNotificationPreferences } from "@/lib/actions/auth";
-import { isEmailConfigured, isNtfyConfigured } from "@/lib/env";
+import { isEmailConfigured, isEncryptionConfigured, isNtfyConfigured } from "@/lib/env";
 import { ChangePasswordForm } from "@/components/ChangePasswordForm";
+import { AiSettingsForm } from "@/components/AiSettingsForm";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -72,6 +73,26 @@ export default async function SettingsPage() {
             Save
           </button>
         </form>
+      </section>
+
+      <section className="rounded-xl border border-border bg-surface p-4 md:p-6">
+        <h2 className="mb-3 font-medium">AI document extraction</h2>
+        {isEncryptionConfigured() ? (
+          <>
+            <p className="mb-3 text-sm text-foreground/60">
+              Bring your own API key to send uploaded documents to a cloud AI provider for
+              higher-accuracy field extraction. Documents are sent directly to your selected
+              provider using your key — nothing changes about how extracted fields are saved;
+              you still review them before submitting the form. Leave this unset to keep using
+              the built-in local extraction only.
+            </p>
+            <AiSettingsForm provider={user.aiProvider} model={user.aiModel} />
+          </>
+        ) : (
+          <p className="text-sm text-amber-600 dark:text-amber-400">
+            Set ENCRYPTION_KEY on the server to enable bringing your own AI provider key.
+          </p>
+        )}
       </section>
 
       <section className="rounded-xl border border-border bg-surface p-4 md:p-6">
