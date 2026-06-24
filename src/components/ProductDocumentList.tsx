@@ -43,7 +43,7 @@ export function ProductDocumentList({ documents }: { documents: ProductDocumentM
           <ConfirmForm
             action={deleteProductDocumentAction.bind(null, doc.productId, doc.id)}
             confirmText={`Delete "${doc.filename}"?`}
-            className="text-foreground/50 hover:text-red-600"
+            className="text-foreground/50 hover:text-danger"
           >
             <Trash2 size={16} />
           </ConfirmForm>

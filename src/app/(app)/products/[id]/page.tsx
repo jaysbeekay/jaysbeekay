@@ -55,7 +55,7 @@ export default async function ProductDetailPage({
           <ConfirmForm
             action={deleteProduct.bind(null, product.id)}
             confirmText="Delete this product and all its documents? This cannot be undone."
-            className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-500/10"
+            className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-danger hover:bg-danger/10"
           >
             <Trash2 size={16} />
             Delete

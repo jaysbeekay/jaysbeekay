@@ -12,13 +12,13 @@ export function StatCard({
   const toneClasses = {
     default: "text-foreground",
     warning: "text-amber-600 dark:text-amber-400",
-    danger: "text-red-600 dark:text-red-400",
+    danger: "text-danger",
   };
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4">
-      <p className="text-sm text-foreground/60">{label}</p>
-      <p className={cn("mt-1 text-2xl font-semibold", toneClasses[tone])}>{value}</p>
+    <div className="rounded-lg border border-border bg-surface p-4 shadow-stripe">
+      <p className="text-sm text-muted">{label}</p>
+      <p className={cn("mt-1 text-2xl font-semibold tracking-tight tabular-nums", toneClasses[tone])}>{value}</p>
     </div>
   );
 }
