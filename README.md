@@ -63,11 +63,52 @@ port 3000. The SQLite database (`data/app.db`) and uploaded documents
 (`data/uploads/`) live in `./data` on the host, mounted into the container —
 back up that directory to back up everything.
 
+[`docker-compose.yml`](docker-compose.yml):
+
+```yaml
+services:
+  app:
+    image: jaysbeekay/contracts:latest
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: file:./data/app.db
+      UPLOADS_DIR: ./data/uploads
+      AUTH_SECRET: ${AUTH_SECRET}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      AUTH_TRUST_HOST: ${AUTH_TRUST_HOST:-}
+      REMINDER_DEFAULT_DAYS: ${REMINDER_DEFAULT_DAYS:-30,14,7,1}
+      REMINDER_CRON_SCHEDULE: ${REMINDER_CRON_SCHEDULE:-0 8 * * *}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-Contracts <no-reply@localhost>}
+      NTFY_URL: ${NTFY_URL:-https://ntfy.sh}
+      NTFY_TOPIC: ${NTFY_TOPIC:-}
+      NTFY_TOKEN: ${NTFY_TOKEN:-}
+      CRON_SECRET: ${CRON_SECRET:-}
+      MCP_TOKEN: ${MCP_TOKEN:-}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-}
+      BARCODE_LOOKUP_ENABLED: ${BARCODE_LOOKUP_ENABLED:-}
+      BARCODE_LOOKUP_API_KEY: ${BARCODE_LOOKUP_API_KEY:-}
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+```
+
+Values not set in `.env` fall back to the defaults shown above (most
+features simply stay disabled until configured).
+
 The image is built and pushed to Docker Hub automatically by
 [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml)
-on every push to `main` (tagged `latest`) and on `v*` tags. To build from
-source instead of pulling, run `docker build -t jaysbeekay/contracts:local .`
-and change `image:` in `docker-compose.yml` to that tag.
+on every push to `main` (tagged `latest`) and on `v*` tags — that same
+workflow also pushes this README to Docker Hub as the repository's
+overview, so the two stay in sync. To build from source instead of
+pulling, run `docker build -t jaysbeekay/contracts:local .` and change
+`image:` in `docker-compose.yml` to that tag.
 
 ## Locking down access with nginx + mTLS
 
