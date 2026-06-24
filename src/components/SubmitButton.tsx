@@ -16,7 +16,7 @@ export function SubmitButton({
 
   const variants = {
     primary: "bg-accent text-accent-foreground hover:opacity-90",
-    danger: "bg-red-600 text-white hover:bg-red-700",
+    danger: "bg-danger text-white hover:opacity-90",
     secondary: "bg-transparent border border-border hover:bg-black/5 dark:hover:bg-white/5",
   };
 

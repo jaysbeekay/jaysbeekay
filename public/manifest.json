@@ -4,8 +4,8 @@
   "description": "Track your personal contracts and never miss a renewal.",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#0f766e",
+  "background_color": "#f6f8fb",
+  "theme_color": "#533afd",
   "icons": [
     {
       "src": "/icon.svg",

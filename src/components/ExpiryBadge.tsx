@@ -12,15 +12,15 @@ export function ExpiryBadge({
     : days == null
       ? "bg-slate-500/10 text-slate-500 dark:text-slate-400"
       : days < 0
-        ? "bg-red-500/10 text-red-600 dark:text-red-400"
+        ? "bg-danger/10 text-danger"
         : days <= 7
-          ? "bg-red-500/10 text-red-600 dark:text-red-400"
+          ? "bg-danger/10 text-danger"
           : days <= 30
             ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-            : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+            : "bg-success/10 text-success";
 
   return (
-    <span className={cn("inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium", tone)}>
+    <span className={cn("inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium", tone)}>
       {cancelled ? "Cancelled" : expiryLabel(days)}
     </span>
   );

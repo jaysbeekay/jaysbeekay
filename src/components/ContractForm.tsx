@@ -110,7 +110,7 @@ export function ContractForm({
   return (
     <form action={formAction} className="space-y-6">
       {!contract && (
-        <div className="space-y-2 rounded-xl border border-dashed border-border p-4">
+        <div className="space-y-2 rounded-lg border border-dashed border-border p-4">
           <label htmlFor="file" className="flex items-center gap-2 text-sm font-medium">
             <Upload size={16} />
             Upload a document to auto-fill fields (optional)
@@ -285,7 +285,7 @@ export function ContractForm({
         )}
       </div>
 
-      <fieldset className="space-y-4 rounded-xl border border-border p-4">
+      <fieldset className="space-y-4 rounded-lg border border-border p-4">
         <legend className="px-1 text-sm font-medium text-foreground/70">
           Contact details (optional)
         </legend>

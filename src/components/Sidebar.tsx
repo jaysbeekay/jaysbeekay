@@ -38,7 +38,7 @@ export function Sidebar({
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
                 active
                   ? "bg-accent/10 text-accent"
-                  : "text-foreground/70 hover:bg-black/5 dark:hover:bg-white/5",
+                  : "text-muted hover:bg-black/5 dark:hover:bg-white/5",
               )}
             >
               <Icon size={18} />
@@ -50,8 +50,8 @@ export function Sidebar({
 
       <div className="border-t border-border px-6 py-4">
         <p className="truncate text-sm font-medium">{userName}</p>
-        <p className="truncate text-xs text-foreground/60">{userEmail}</p>
-        <SignOutButton className="mt-3 flex items-center gap-2 text-sm text-foreground/70 hover:text-foreground" />
+        <p className="truncate text-xs text-muted">{userEmail}</p>
+        <SignOutButton className="mt-3 flex items-center gap-2 text-sm text-muted hover:text-foreground" />
       </div>
     </aside>
   );

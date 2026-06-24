@@ -1,33 +1,48 @@
 @import "tailwindcss";
 
+/*
+ * Stripe design system (design-systems/stripe/DESIGN.md): purple accent,
+ * deep navy headings over slate body text, conservative 4-8px radii, and
+ * blue-tinted layered shadows instead of background tinting for depth.
+ */
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #f6f8fb;
+  --foreground: #061b31;
+  --muted: #64748d;
   --surface: #ffffff;
-  --border: #e2e8f0;
-  --accent: #0f766e;
+  --border: #e5edf5;
+  --accent: #533afd;
   --accent-foreground: #ffffff;
+  --success: #15be53;
+  --danger: #ea2261;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
   --color-surface: var(--surface);
   --color-border: var(--border);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-inter-sans);
+  --font-mono: var(--font-source-code-pro);
+  --shadow-stripe: 0px 7px 14px rgba(50, 50, 93, 0.1), 0px 3px 6px rgba(0, 0, 0, 0.08);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0b1120;
-    --foreground: #e2e8f0;
-    --surface: #111827;
-    --border: #1f2937;
-    --accent: #2dd4bf;
-    --accent-foreground: #0b1120;
+    --background: #1c1e54;
+    --foreground: #eef0fa;
+    --muted: #a9a8d6;
+    --surface: #242760;
+    --border: #2f3270;
+    --accent: #8f7afe;
+    --accent-foreground: #1c1e54;
+    --success: #15be53;
+    --danger: #ea2261;
   }
 }
 
@@ -35,4 +50,6 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-weight: 300;
+  font-feature-settings: "ss01" 1;
 }

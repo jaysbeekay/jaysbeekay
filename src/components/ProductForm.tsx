@@ -124,7 +124,7 @@ export function ProductForm({
     <form action={formAction} className="space-y-6">
       {!product && (
         <div className="space-y-4">
-          <div className="space-y-2 rounded-xl border border-dashed border-border p-4">
+          <div className="space-y-2 rounded-lg border border-dashed border-border p-4">
             <label htmlFor="invoiceFile" className="flex items-center gap-2 text-sm font-medium">
               <Upload size={16} />
               Upload an invoice to auto-fill fields (optional)
@@ -143,7 +143,7 @@ export function ProductForm({
             )}
           </div>
 
-          <div className="space-y-2 rounded-xl border border-dashed border-border p-4">
+          <div className="space-y-2 rounded-lg border border-dashed border-border p-4">
             <label htmlFor="photoFile" className="flex items-center gap-2 text-sm font-medium">
               <Upload size={16} />
               Upload a photo of the product (optional)

@@ -8,6 +8,9 @@ import {
   findLabeledValue,
   findPhone,
 } from "@/lib/documents/textHeuristics";
+import { extractWithByok, isByokConfigured } from "@/lib/ai/extract";
+import { parseJsonObject, whitelistFields } from "@/lib/ai/parseJson";
+import type { ByokUser } from "@/lib/ai/types";
 
 export interface ExtractedFields {
   title?: string;
@@ -72,14 +75,15 @@ function countFound(fields: ExtractedFields): number {
   return Object.values(fields).filter((v) => v != null && v !== "").length;
 }
 
+const EXTRACTION_INSTRUCTIONS =
+  "Extract contract details from this document as a single JSON object " +
+  "with these optional keys: title, provider, contractNumber, startDate (YYYY-MM-DD), " +
+  `endDate (YYYY-MM-DD), cost (number only, no currency symbol), billingFrequency (one of ` +
+  `${BILLING_FREQUENCIES.join(", ")}), contactName, contactPhone, contactEmail. Omit keys ` +
+  "you cannot determine. Respond with JSON only, no other text.";
+
 async function llmExtract(text: string): Promise<ExtractedFields | null> {
-  const prompt =
-    "Extract contract details from the following document text as a single JSON object " +
-    "with these optional keys: title, provider, contractNumber, startDate (YYYY-MM-DD), " +
-    `endDate (YYYY-MM-DD), cost (number only, no currency symbol), billingFrequency (one of ` +
-    `${BILLING_FREQUENCIES.join(", ")}), contactName, contactPhone, contactEmail. Omit keys ` +
-    "you cannot determine. Respond with JSON only, no other text.\n\n" +
-    `Document text:\n${text.slice(0, 6000)}`;
+  const prompt = `${EXTRACTION_INSTRUCTIONS}\n\nDocument text:\n${text.slice(0, 6000)}`;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 45_000);
@@ -97,18 +101,24 @@ async function llmExtract(text: string): Promise<ExtractedFields | null> {
     const parsed = JSON.parse(data.response);
     if (typeof parsed !== "object" || parsed === null) return null;
 
-    const fields: ExtractedFields = {};
-    for (const key of FIELD_KEYS) {
-      const value = (parsed as Record<string, unknown>)[key];
-      if (typeof value === "string" && value.trim()) fields[key] = value.trim();
-      else if (typeof value === "number") fields[key] = String(value);
-    }
-    return fields;
+    return whitelistFields(parsed as Record<string, unknown>, FIELD_KEYS);
   } catch {
     return null;
   } finally {
     clearTimeout(timeout);
   }
+}
+
+async function byokExtract(
+  byokUser: ByokUser,
+  buffer: Buffer,
+  mimeType: string,
+): Promise<ExtractedFields | null> {
+  const raw = await extractWithByok(byokUser, buffer, mimeType, EXTRACTION_INSTRUCTIONS);
+  if (!raw) return null;
+  const parsed = parseJsonObject(raw);
+  if (!parsed) return null;
+  return whitelistFields(parsed, FIELD_KEYS);
 }
 
 // Below this many matched fields, the regex pass is considered unreliable
@@ -117,18 +127,28 @@ const LOW_CONFIDENCE_THRESHOLD = 2;
 
 export async function extractContractFields(
   text: string,
-): Promise<{ fields: ExtractedFields; source: "heuristic" | "llm" | "none" }> {
-  if (!text.trim()) return { fields: {}, source: "none" };
+  options: { buffer?: Buffer; mimeType?: string; byokUser?: ByokUser | null } = {},
+): Promise<{ fields: ExtractedFields; source: "byok" | "heuristic" | "llm" | "none" }> {
+  if (!text.trim() && !options.buffer) return { fields: {}, source: "none" };
 
   const heuristic = heuristicExtract(text);
-  if (countFound(heuristic) >= LOW_CONFIDENCE_THRESHOLD || !isOllamaConfigured()) {
+  if (countFound(heuristic) >= LOW_CONFIDENCE_THRESHOLD) {
     return { fields: heuristic, source: "heuristic" };
   }
 
-  const llm = await llmExtract(text);
-  if (!llm || countFound(llm) === 0) {
-    return { fields: heuristic, source: "heuristic" };
+  if (options.buffer && options.mimeType && isByokConfigured(options.byokUser)) {
+    const byok = await byokExtract(options.byokUser, options.buffer, options.mimeType);
+    if (byok && countFound(byok) > 0) {
+      return { fields: { ...heuristic, ...byok }, source: "byok" };
+    }
   }
 
-  return { fields: { ...heuristic, ...llm }, source: "llm" };
+  if (isOllamaConfigured()) {
+    const llm = await llmExtract(text);
+    if (llm && countFound(llm) > 0) {
+      return { fields: { ...heuristic, ...llm }, source: "llm" };
+    }
+  }
+
+  return { fields: heuristic, source: "heuristic" };
 }

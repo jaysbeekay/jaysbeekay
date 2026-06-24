@@ -15,6 +15,8 @@ reminders before either expires.
 - Attach documents (PDF/images/Word docs) to each contract or product —
   uploading an invoice/PDF/photo when creating a contract or product auto-fills
   fields like provider/manufacturer, dates, and cost/price
+- Optional bring-your-own-key AI extraction (Claude/Gemini/OpenAI) for
+  higher-accuracy field extraction from documents, fully opt-in per user
 - Dashboard with active/expiring/expired counts and estimated monthly spend,
   for both contracts and warranties
 - Configurable reminder thresholds per contract/product (e.g. 30/14/7/1 days before expiry)
@@ -266,7 +268,27 @@ The Ollama fallback is optional and off by default (heuristics-only). If
 your app container can't resolve `localhost` to your host machine's Ollama
 instance, point `OLLAMA_BASE_URL` at the host's LAN IP or
 `http://host.docker.internal:11434` instead. No document text or extracted
-fields are ever sent anywhere else — only to the Ollama server you configure.
+fields are ever sent anywhere else — only to the Ollama server you configure,
+or to a cloud AI provider you've explicitly opted into below.
+
+## Bring your own AI key
+
+Each user can optionally connect their own API key for a cloud AI provider —
+Anthropic Claude, Google Gemini, or OpenAI — from **Settings → AI document
+extraction**. When configured, it's used as a third extraction stage: if the
+local heuristics can't confidently parse an uploaded document, the document's
+raw bytes (PDF or photo, not the OCR'd text) are sent directly to your chosen
+provider's API using your key, which generally extracts fields far more
+accurately than local OCR + heuristics, especially for unusual layouts. This
+takes priority over the Ollama fallback when both are configured. As with the
+existing auto-fill flow, extracted fields are only suggestions — you still
+review and correct them before saving.
+
+This requires the server to have `ENCRYPTION_KEY` set (see below); each user's
+key is encrypted at rest (AES-256-GCM) and is never displayed back after
+saving. Leave it unset to hide this section entirely and keep extraction
+fully local/self-hosted. Word docs (`.doc`/`.docx`) aren't supported by this
+path either, for the same reason local OCR skips them.
 
 ## Barcode scanning for products
 
@@ -304,6 +326,7 @@ for the full list with defaults. Notable ones:
 | `OLLAMA_BASE_URL` / `OLLAMA_MODEL` | Optional. Set both to enable the local-LLM fallback for document auto-fill when heuristics can't confidently parse a scan — see "Auto-filling fields from a document" above. |
 | `BARCODE_LOOKUP_ENABLED` | Optional. Set to `true` to look up a scanned product barcode online and auto-fill its name/manufacturer — see "Barcode scanning for products" above. |
 | `BARCODE_LOOKUP_API_KEY` | Optional. A paid UPCitemdb API key for higher-limit barcode lookups, instead of the free keyless trial endpoint. |
+| `ENCRYPTION_KEY` | Optional. Generate with `openssl rand -base64 32`. Set to enable users bringing their own AI provider key for document extraction — see "Bring your own AI key" above. |
 
 If neither email nor ntfy is configured, the scheduler runs but sends nothing
 (no errors).
