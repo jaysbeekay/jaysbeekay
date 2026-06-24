@@ -29,6 +29,26 @@ export const env = {
     apiKey: optional("BARCODE_LOOKUP_API_KEY"),
   },
   encryptionKey: optional("ENCRYPTION_KEY"),
+  backup: {
+    cron: optional("BACKUP_CRON_SCHEDULE", "0 3 * * *"),
+    retentionCount: Number(optional("BACKUP_RETENTION_COUNT", "7")),
+    s3: {
+      endpoint: optional("BACKUP_S3_ENDPOINT"),
+      region: optional("BACKUP_S3_REGION", "auto"),
+      bucket: optional("BACKUP_S3_BUCKET"),
+      accessKeyId: optional("BACKUP_S3_ACCESS_KEY_ID"),
+      secretAccessKey: optional("BACKUP_S3_SECRET_ACCESS_KEY"),
+      forcePathStyle: optional("BACKUP_S3_FORCE_PATH_STYLE", "false") === "true",
+    },
+    sftp: {
+      host: optional("BACKUP_SFTP_HOST"),
+      port: Number(optional("BACKUP_SFTP_PORT", "22")),
+      username: optional("BACKUP_SFTP_USERNAME"),
+      password: optional("BACKUP_SFTP_PASSWORD"),
+      privateKey: optional("BACKUP_SFTP_PRIVATE_KEY"),
+      remotePath: optional("BACKUP_SFTP_REMOTE_PATH", "/backups"),
+    },
+  },
 };
 
 export const isEmailConfigured = () => Boolean(env.smtp.host && env.smtp.user);
@@ -36,3 +56,16 @@ export const isNtfyConfigured = () => Boolean(env.ntfy.url && env.ntfy.topic);
 export const isOllamaConfigured = () => Boolean(env.ollama.baseUrl && env.ollama.model);
 export const isBarcodeLookupConfigured = () => env.barcodeLookup.enabled;
 export const isEncryptionConfigured = () => env.encryptionKey.length > 0;
+
+export const isS3BackupConfigured = () =>
+  Boolean(env.backup.s3.bucket && env.backup.s3.accessKeyId && env.backup.s3.secretAccessKey);
+export const isSftpBackupConfigured = () =>
+  Boolean(
+    env.backup.sftp.host &&
+      env.backup.sftp.username &&
+      (env.backup.sftp.password || env.backup.sftp.privateKey),
+  );
+// Backups are only enabled once ENCRYPTION_KEY is set, so an offsite backup
+// can never leave the server unencrypted.
+export const isBackupConfigured = () =>
+  isEncryptionConfigured() && (isS3BackupConfigured() || isSftpBackupConfigured());

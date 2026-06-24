@@ -64,6 +64,16 @@ enum AiProvider {
   OPENAI
 }
 
+enum BackupDestination {
+  S3
+  SFTP
+}
+
+enum BackupStatus {
+  SUCCESS
+  FAILURE
+}
+
 model User {
   id                String     @id @default(cuid())
   name              String
@@ -188,4 +198,17 @@ model ProductNotificationLog {
 
   @@unique([productId, channel, thresholdDays])
   @@map("product_notification_logs")
+}
+
+model BackupLog {
+  id          String            @id @default(cuid())
+  destination BackupDestination
+  status      BackupStatus
+  fileName    String?
+  sizeBytes   Int?
+  message     String?
+  startedAt   DateTime          @default(now())
+  finishedAt  DateTime?
+
+  @@map("backup_logs")
 }

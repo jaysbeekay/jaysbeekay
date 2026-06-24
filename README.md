@@ -108,6 +108,21 @@ services:
       OLLAMA_MODEL: ${OLLAMA_MODEL:-}
       BARCODE_LOOKUP_ENABLED: ${BARCODE_LOOKUP_ENABLED:-}
       BARCODE_LOOKUP_API_KEY: ${BARCODE_LOOKUP_API_KEY:-}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-}
+      BACKUP_CRON_SCHEDULE: ${BACKUP_CRON_SCHEDULE:-0 3 * * *}
+      BACKUP_RETENTION_COUNT: ${BACKUP_RETENTION_COUNT:-7}
+      BACKUP_S3_ENDPOINT: ${BACKUP_S3_ENDPOINT:-}
+      BACKUP_S3_REGION: ${BACKUP_S3_REGION:-auto}
+      BACKUP_S3_BUCKET: ${BACKUP_S3_BUCKET:-}
+      BACKUP_S3_ACCESS_KEY_ID: ${BACKUP_S3_ACCESS_KEY_ID:-}
+      BACKUP_S3_SECRET_ACCESS_KEY: ${BACKUP_S3_SECRET_ACCESS_KEY:-}
+      BACKUP_S3_FORCE_PATH_STYLE: ${BACKUP_S3_FORCE_PATH_STYLE:-false}
+      BACKUP_SFTP_HOST: ${BACKUP_SFTP_HOST:-}
+      BACKUP_SFTP_PORT: ${BACKUP_SFTP_PORT:-22}
+      BACKUP_SFTP_USERNAME: ${BACKUP_SFTP_USERNAME:-}
+      BACKUP_SFTP_PASSWORD: ${BACKUP_SFTP_PASSWORD:-}
+      BACKUP_SFTP_PRIVATE_KEY: ${BACKUP_SFTP_PRIVATE_KEY:-}
+      BACKUP_SFTP_REMOTE_PATH: ${BACKUP_SFTP_REMOTE_PATH:-/backups}
     volumes:
       - ./data:/app/data
     restart: unless-stopped
@@ -320,6 +335,42 @@ keyless trial endpoint (rate-limited per IP) to look up the product; set
 higher-limit endpoint instead. Leaving lookup disabled still lets you scan
 and save the barcode — it just won't auto-fill anything from it.
 
+## Database backups
+
+The app can automatically back up its SQLite database offsite, encrypted,
+on a schedule. Each backup:
+
+1. Takes a consistent point-in-time snapshot of the live database using
+   SQLite's `VACUUM INTO` — the app keeps running normally throughout, and
+   nothing is locked or paused.
+2. Encrypts the snapshot with AES-256-GCM using `ENCRYPTION_KEY` (the same
+   key used for "bring your own AI key", see above) before it ever leaves
+   the server.
+3. Uploads the encrypted file to whichever destination(s) you've
+   configured — **S3-compatible object storage** (AWS S3, Backblaze B2,
+   Cloudflare R2, MinIO, etc.) and/or **SFTP**, independently enabled by
+   their own environment variables, and both run if both are configured.
+4. Prunes older backups at each destination beyond `BACKUP_RETENTION_COUNT`.
+
+Backups stay fully disabled until `ENCRYPTION_KEY` is set — there's no way
+to send an unencrypted backup offsite. With encryption configured, set
+`BACKUP_S3_*` and/or `BACKUP_SFTP_*` to enable each destination. See
+[`.env.example`](.env.example) for the full list of backup-related
+variables and their defaults.
+
+Backups run on `BACKUP_CRON_SCHEDULE` (default daily at 03:00) via the
+same built-in scheduler used for reminders, can be triggered manually from
+**Settings → Database backups** (admin only), or triggered externally via
+`POST /api/backup` with header `x-cron-secret: <CRON_SECRET>` (same secret
+as `/api/cron`; leaving `CRON_SECRET` unset disables both endpoints).
+Recent backup runs (destination, status, size, any error) are shown on
+that same Settings page.
+
+To restore: decrypt the downloaded file with AES-256-GCM using
+`ENCRYPTION_KEY` (the first 12 bytes are the IV, the next 16 are the auth
+tag, the rest is the encrypted SQLite database), then replace `data/app.db`
+with the decrypted file while the app is stopped.
+
 ## Native iOS app
 
 There's a thin native iOS wrapper in `ios/` (built with
@@ -346,7 +397,10 @@ for the full list with defaults. Notable ones:
 | `OLLAMA_BASE_URL` / `OLLAMA_MODEL` | Optional. Set both to enable the local-LLM fallback for document auto-fill when heuristics can't confidently parse a scan — see "Auto-filling fields from a document" above. |
 | `BARCODE_LOOKUP_ENABLED` | Optional. Set to `true` to look up a scanned product barcode online and auto-fill its name/manufacturer — see "Barcode scanning for products" above. |
 | `BARCODE_LOOKUP_API_KEY` | Optional. A paid UPCitemdb API key for higher-limit barcode lookups, instead of the free keyless trial endpoint. |
-| `ENCRYPTION_KEY` | Optional. Generate with `openssl rand -base64 32`. Set to enable users bringing their own AI provider key for document extraction — see "Bring your own AI key" above. |
+| `ENCRYPTION_KEY` | Optional. Generate with `openssl rand -base64 32`. Set to enable users bringing their own AI provider key for document extraction, and a prerequisite for offsite database backups — see "Bring your own AI key" and "Database backups" above. |
+| `BACKUP_CRON_SCHEDULE` / `BACKUP_RETENTION_COUNT` | Optional. Schedule (cron syntax, default daily at 03:00) and how many backups to keep per destination (default 7). |
+| `BACKUP_S3_*` | Optional. Set `BACKUP_S3_BUCKET`, `BACKUP_S3_ACCESS_KEY_ID`, `BACKUP_S3_SECRET_ACCESS_KEY` (plus `BACKUP_S3_ENDPOINT`/`BACKUP_S3_REGION`/`BACKUP_S3_FORCE_PATH_STYLE` for non-AWS providers) to enable S3-compatible offsite backups — see "Database backups" above. |
+| `BACKUP_SFTP_*` | Optional. Set `BACKUP_SFTP_HOST` and `BACKUP_SFTP_USERNAME` plus `BACKUP_SFTP_PASSWORD` or `BACKUP_SFTP_PRIVATE_KEY` to enable SFTP offsite backups — see "Database backups" above. |
 
 If neither email nor ntfy is configured, the scheduler runs but sends nothing
 (no errors).

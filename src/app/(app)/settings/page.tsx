@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Users } from "lucide-react";
+import { DatabaseBackup, Users } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { updateNotificationPreferences } from "@/lib/actions/auth";
@@ -34,13 +34,22 @@ export default async function SettingsPage() {
           </div>
         </dl>
         {user.role === "ADMIN" && (
-          <Link
-            href="/settings/users"
-            className="mt-4 inline-flex items-center gap-2 text-sm text-accent hover:underline"
-          >
-            <Users size={16} />
-            Manage household members
-          </Link>
+          <div className="mt-4 flex flex-col gap-2">
+            <Link
+              href="/settings/users"
+              className="inline-flex items-center gap-2 text-sm text-accent hover:underline"
+            >
+              <Users size={16} />
+              Manage household members
+            </Link>
+            <Link
+              href="/settings/backups"
+              className="inline-flex items-center gap-2 text-sm text-accent hover:underline"
+            >
+              <DatabaseBackup size={16} />
+              Database backups
+            </Link>
+          </div>
         )}
       </section>
 
