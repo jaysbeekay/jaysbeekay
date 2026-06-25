@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
@@ -5,6 +6,8 @@ import { ContractCard } from "@/components/ContractCard";
 import { ProductCard } from "@/components/ProductCard";
 import { StatCard } from "@/components/StatCard";
 import { daysUntil, monthlyEquivalent } from "@/lib/utils";
+
+export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
   const contracts = await prisma.contract.findMany({

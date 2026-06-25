@@ -11,8 +11,16 @@ import {
   loginSchema,
   setupSchema,
 } from "@/lib/validation/auth";
+import { formDataToStringValues } from "@/lib/form-state";
 
-export type ActionState = { error?: string; success?: string } | null;
+export type ActionState = {
+  error?: string;
+  success?: string;
+  values?: Record<string, string>;
+} | null;
+
+// Password is intentionally excluded — never echo it back to the form.
+const CREATE_USER_FORM_FIELDS = ["name", "email", "role"];
 
 function firstIssueMessage(error: { issues: { message: string }[] }) {
   return error.issues[0]?.message ?? "Invalid input";
@@ -100,14 +108,20 @@ export async function createUser(
     role: formData.get("role") || "MEMBER",
   });
   if (!parsed.success) {
-    return { error: firstIssueMessage(parsed.error) };
+    return {
+      error: firstIssueMessage(parsed.error),
+      values: formDataToStringValues(formData, CREATE_USER_FORM_FIELDS),
+    };
   }
 
   const existing = await prisma.user.findUnique({
     where: { email: parsed.data.email },
   });
   if (existing) {
-    return { error: "A user with that email already exists." };
+    return {
+      error: "A user with that email already exists.",
+      values: formDataToStringValues(formData, CREATE_USER_FORM_FIELDS),
+    };
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 12);

@@ -17,13 +17,26 @@ export function CreateUserForm() {
         <label htmlFor="name" className="text-sm font-medium">
           Name
         </label>
-        <input id="name" name="name" required className={inputClass} />
+        <input
+          id="name"
+          name="name"
+          required
+          defaultValue={state?.values?.name}
+          className={inputClass}
+        />
       </div>
       <div className="space-y-1">
         <label htmlFor="email" className="text-sm font-medium">
           Email
         </label>
-        <input id="email" name="email" type="email" required className={inputClass} />
+        <input
+          id="email"
+          name="email"
+          type="email"
+          required
+          defaultValue={state?.values?.email}
+          className={inputClass}
+        />
       </div>
       <div className="space-y-1">
         <label htmlFor="password" className="text-sm font-medium">
@@ -42,7 +55,12 @@ export function CreateUserForm() {
         <label htmlFor="role" className="text-sm font-medium">
           Role
         </label>
-        <select id="role" name="role" defaultValue="MEMBER" className={inputClass}>
+        <select
+          id="role"
+          name="role"
+          defaultValue={state?.values?.role ?? "MEMBER"}
+          className={inputClass}
+        >
           <option value="MEMBER">Member</option>
           <option value="ADMIN">Admin</option>
         </select>

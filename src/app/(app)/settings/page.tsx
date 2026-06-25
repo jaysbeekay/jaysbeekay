@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { DatabaseBackup, Users } from "lucide-react";
 import { auth } from "@/lib/auth";
@@ -6,6 +7,8 @@ import { updateNotificationPreferences } from "@/lib/actions/auth";
 import { isEmailConfigured, isEncryptionConfigured, isNtfyConfigured } from "@/lib/env";
 import { ChangePasswordForm } from "@/components/ChangePasswordForm";
 import { AiSettingsForm } from "@/components/AiSettingsForm";
+
+export const metadata: Metadata = { title: "Settings" };
 
 export default async function SettingsPage() {
   const session = await auth();

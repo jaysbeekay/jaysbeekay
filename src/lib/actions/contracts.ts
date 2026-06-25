@@ -12,8 +12,33 @@ import {
   deleteDocument as deleteDocumentFile,
   saveDocument,
 } from "@/lib/storage";
+import { formDataToStringValues } from "@/lib/form-state";
 
-export type ActionState = { error?: string; success?: string } | null;
+export type ActionState = {
+  error?: string;
+  success?: string;
+  values?: Record<string, string>;
+} | null;
+
+const CONTRACT_FORM_FIELDS = [
+  "title",
+  "category",
+  "provider",
+  "contractNumber",
+  "startDate",
+  "endDate",
+  "renewalType",
+  "noticePeriodDays",
+  "cost",
+  "currency",
+  "billingFrequency",
+  "status",
+  "contactName",
+  "contactPhone",
+  "contactEmail",
+  "notes",
+  "reminderDaysBefore",
+];
 
 function firstIssueMessage(error: { issues: { message: string }[] }) {
   return error.issues[0]?.message ?? "Invalid input";
@@ -74,7 +99,10 @@ export async function createContract(
 
   const parsed = contractSchema.safeParse(formToContractInput(formData));
   if (!parsed.success) {
-    return { error: firstIssueMessage(parsed.error) };
+    return {
+      error: firstIssueMessage(parsed.error),
+      values: formDataToStringValues(formData, CONTRACT_FORM_FIELDS),
+    };
   }
 
   const file = formData.get("file");
@@ -107,7 +135,10 @@ export async function updateContract(
 
   const parsed = contractSchema.safeParse(formToContractInput(formData));
   if (!parsed.success) {
-    return { error: firstIssueMessage(parsed.error) };
+    return {
+      error: firstIssueMessage(parsed.error),
+      values: formDataToStringValues(formData, CONTRACT_FORM_FIELDS),
+    };
   }
 
   const existing = await prisma.contract.findUnique({ where: { id: contractId } });

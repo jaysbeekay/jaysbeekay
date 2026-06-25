@@ -166,7 +166,7 @@ export function ProductForm({
             id="name"
             name="name"
             required
-            defaultValue={product?.name}
+            defaultValue={state?.values?.name ?? product?.name}
             placeholder="e.g. Samsung 65-inch QLED TV"
             className={inputClass}
           />
@@ -177,7 +177,7 @@ export function ProductForm({
             ref={manufacturerRef}
             id="manufacturer"
             name="manufacturer"
-            defaultValue={product?.manufacturer ?? ""}
+            defaultValue={state?.values?.manufacturer ?? product?.manufacturer ?? ""}
             placeholder="e.g. Samsung"
             className={inputClass}
           />
@@ -188,7 +188,7 @@ export function ProductForm({
             ref={vendorRef}
             id="vendor"
             name="vendor"
-            defaultValue={product?.vendor ?? ""}
+            defaultValue={state?.values?.vendor ?? product?.vendor ?? ""}
             placeholder="e.g. JB Hi-Fi"
             className={inputClass}
           />
@@ -199,7 +199,7 @@ export function ProductForm({
             ref={serialNumberRef}
             id="serialNumber"
             name="serialNumber"
-            defaultValue={product?.serialNumber ?? ""}
+            defaultValue={state?.values?.serialNumber ?? product?.serialNumber ?? ""}
             className={inputClass}
           />
         </Field>
@@ -210,7 +210,7 @@ export function ProductForm({
               ref={barcodeRef}
               id="barcode"
               name="barcode"
-              defaultValue={product?.barcode ?? ""}
+              defaultValue={state?.values?.barcode ?? product?.barcode ?? ""}
               placeholder="e.g. 9310036001234"
               className={inputClass}
             />
@@ -243,7 +243,7 @@ export function ProductForm({
             id="purchaseDate"
             name="purchaseDate"
             type="date"
-            defaultValue={toDateInputValue(product?.purchaseDate)}
+            defaultValue={state?.values?.purchaseDate ?? toDateInputValue(product?.purchaseDate)}
             className={inputClass}
           />
         </Field>
@@ -253,7 +253,9 @@ export function ProductForm({
             id="warrantyEndDate"
             name="warrantyEndDate"
             type="date"
-            defaultValue={toDateInputValue(product?.warrantyEndDate)}
+            defaultValue={
+              state?.values?.warrantyEndDate ?? toDateInputValue(product?.warrantyEndDate)
+            }
             className={inputClass}
           />
         </Field>
@@ -266,7 +268,7 @@ export function ProductForm({
             type="number"
             min={0}
             step="0.01"
-            defaultValue={product?.price ?? ""}
+            defaultValue={state?.values?.price ?? product?.price ?? ""}
             className={inputClass}
           />
         </Field>
@@ -275,7 +277,7 @@ export function ProductForm({
           <input
             id="currency"
             name="currency"
-            defaultValue={product?.currency ?? "AUD"}
+            defaultValue={state?.values?.currency ?? product?.currency ?? "AUD"}
             maxLength={10}
             className={inputClass}
           />
@@ -287,7 +289,7 @@ export function ProductForm({
           id="notes"
           name="notes"
           rows={4}
-          defaultValue={product?.notes ?? ""}
+          defaultValue={state?.values?.notes ?? product?.notes ?? ""}
           className={inputClass}
         />
       </Field>
@@ -299,7 +301,7 @@ export function ProductForm({
         <input
           id="reminderDaysBefore"
           name="reminderDaysBefore"
-          defaultValue={product?.reminderDaysBefore ?? ""}
+          defaultValue={state?.values?.reminderDaysBefore ?? product?.reminderDaysBefore ?? ""}
           placeholder="30,14,7,1"
           className={inputClass}
         />

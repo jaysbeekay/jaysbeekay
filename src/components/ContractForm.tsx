@@ -137,7 +137,7 @@ export function ContractForm({
             id="title"
             name="title"
             required
-            defaultValue={contract?.title}
+            defaultValue={state?.values?.title ?? contract?.title}
             placeholder="e.g. Apartment lease - 12 Main St"
             className={inputClass}
           />
@@ -148,7 +148,7 @@ export function ContractForm({
             id="category"
             name="category"
             required
-            defaultValue={contract?.category ?? "OTHER"}
+            defaultValue={state?.values?.category ?? contract?.category ?? "OTHER"}
             className={inputClass}
           >
             {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
@@ -165,7 +165,7 @@ export function ContractForm({
             id="provider"
             name="provider"
             required
-            defaultValue={contract?.provider}
+            defaultValue={state?.values?.provider ?? contract?.provider}
             placeholder="e.g. Allianz, Acme Realty"
             className={inputClass}
           />
@@ -176,7 +176,7 @@ export function ContractForm({
             ref={contractNumberRef}
             id="contractNumber"
             name="contractNumber"
-            defaultValue={contract?.contractNumber ?? ""}
+            defaultValue={state?.values?.contractNumber ?? contract?.contractNumber ?? ""}
             className={inputClass}
           />
         </Field>
@@ -187,7 +187,7 @@ export function ContractForm({
             id="startDate"
             name="startDate"
             type="date"
-            defaultValue={toDateInputValue(contract?.startDate)}
+            defaultValue={state?.values?.startDate ?? toDateInputValue(contract?.startDate)}
             className={inputClass}
           />
         </Field>
@@ -198,7 +198,7 @@ export function ContractForm({
             id="endDate"
             name="endDate"
             type="date"
-            defaultValue={toDateInputValue(contract?.endDate)}
+            defaultValue={state?.values?.endDate ?? toDateInputValue(contract?.endDate)}
             className={inputClass}
           />
         </Field>
@@ -207,7 +207,7 @@ export function ContractForm({
           <select
             id="renewalType"
             name="renewalType"
-            defaultValue={contract?.renewalType ?? "MANUAL_RENEWAL"}
+            defaultValue={state?.values?.renewalType ?? contract?.renewalType ?? "MANUAL_RENEWAL"}
             className={inputClass}
           >
             {Object.entries(RENEWAL_LABELS).map(([value, label]) => (
@@ -224,7 +224,7 @@ export function ContractForm({
             name="noticePeriodDays"
             type="number"
             min={0}
-            defaultValue={contract?.noticePeriodDays ?? ""}
+            defaultValue={state?.values?.noticePeriodDays ?? contract?.noticePeriodDays ?? ""}
             placeholder="e.g. 30"
             className={inputClass}
           />
@@ -238,7 +238,7 @@ export function ContractForm({
             type="number"
             min={0}
             step="0.01"
-            defaultValue={contract?.cost ?? ""}
+            defaultValue={state?.values?.cost ?? contract?.cost ?? ""}
             className={inputClass}
           />
         </Field>
@@ -247,7 +247,7 @@ export function ContractForm({
           <input
             id="currency"
             name="currency"
-            defaultValue={contract?.currency ?? "AUD"}
+            defaultValue={state?.values?.currency ?? contract?.currency ?? "AUD"}
             maxLength={10}
             className={inputClass}
           />
@@ -258,7 +258,7 @@ export function ContractForm({
             ref={billingFrequencyRef}
             id="billingFrequency"
             name="billingFrequency"
-            defaultValue={contract?.billingFrequency ?? ""}
+            defaultValue={state?.values?.billingFrequency ?? contract?.billingFrequency ?? ""}
             className={inputClass}
           >
             <option value="">Not set</option>
@@ -275,7 +275,7 @@ export function ContractForm({
             <select
               id="status"
               name="status"
-              defaultValue={contract.status}
+              defaultValue={state?.values?.status ?? contract.status}
               className={inputClass}
             >
               <option value="ACTIVE">Active</option>
@@ -295,7 +295,7 @@ export function ContractForm({
               ref={contactNameRef}
               id="contactName"
               name="contactName"
-              defaultValue={contract?.contactName ?? ""}
+              defaultValue={state?.values?.contactName ?? contract?.contactName ?? ""}
               className={inputClass}
             />
           </Field>
@@ -304,7 +304,7 @@ export function ContractForm({
               ref={contactPhoneRef}
               id="contactPhone"
               name="contactPhone"
-              defaultValue={contract?.contactPhone ?? ""}
+              defaultValue={state?.values?.contactPhone ?? contract?.contactPhone ?? ""}
               className={inputClass}
             />
           </Field>
@@ -314,7 +314,7 @@ export function ContractForm({
               id="contactEmail"
               name="contactEmail"
               type="email"
-              defaultValue={contract?.contactEmail ?? ""}
+              defaultValue={state?.values?.contactEmail ?? contract?.contactEmail ?? ""}
               className={inputClass}
             />
           </Field>
@@ -326,7 +326,7 @@ export function ContractForm({
           id="notes"
           name="notes"
           rows={4}
-          defaultValue={contract?.notes ?? ""}
+          defaultValue={state?.values?.notes ?? contract?.notes ?? ""}
           className={inputClass}
         />
       </Field>
@@ -338,7 +338,7 @@ export function ContractForm({
         <input
           id="reminderDaysBefore"
           name="reminderDaysBefore"
-          defaultValue={contract?.reminderDaysBefore ?? ""}
+          defaultValue={state?.values?.reminderDaysBefore ?? contract?.reminderDaysBefore ?? ""}
           placeholder="30,14,7,1"
           className={inputClass}
         />

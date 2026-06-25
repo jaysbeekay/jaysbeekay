@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { ProductCard } from "@/components/ProductCard";
 import type { Prisma } from "@/generated/prisma/client";
+
+export const metadata: Metadata = { title: "Products" };
 
 export default async function ProductsPage({
   searchParams,
@@ -58,7 +61,9 @@ export default async function ProductsPage({
 
       {products.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-foreground/60">
-          No products found. Try adjusting your search, or add a new product.
+          {q
+            ? "No products match your search."
+            : "No products yet. Add your first product to get started."}
         </p>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">

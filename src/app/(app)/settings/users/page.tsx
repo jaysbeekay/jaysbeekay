@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { auth } from "@/lib/auth";
@@ -6,6 +7,8 @@ import { deleteUser } from "@/lib/actions/auth";
 import { ConfirmForm } from "@/components/ConfirmForm";
 import { CreateUserForm } from "@/components/CreateUserForm";
 import { formatDate } from "@/lib/utils";
+
+export const metadata: Metadata = { title: "Household members" };
 
 export default async function ManageUsersPage() {
   const session = await auth();
