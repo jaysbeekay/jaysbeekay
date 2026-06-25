@@ -80,7 +80,9 @@ export default async function ContractsPage({
 
       {contracts.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-foreground/60">
-          No contracts found. Try adjusting your filters, or add a new contract.
+          {q || category || status
+            ? "No contracts match your search or filters."
+            : "No contracts yet. Add your first contract to get started."}
         </p>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
