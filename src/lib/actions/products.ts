@@ -13,8 +13,27 @@ import {
   saveProductDocument,
 } from "@/lib/storage";
 import { ProductDocumentKind } from "@/generated/prisma/enums";
+import { formDataToStringValues } from "@/lib/form-state";
 
-export type ActionState = { error?: string; success?: string } | null;
+export type ActionState = {
+  error?: string;
+  success?: string;
+  values?: Record<string, string>;
+} | null;
+
+const PRODUCT_FORM_FIELDS = [
+  "name",
+  "manufacturer",
+  "vendor",
+  "serialNumber",
+  "barcode",
+  "purchaseDate",
+  "warrantyEndDate",
+  "price",
+  "currency",
+  "notes",
+  "reminderDaysBefore",
+];
 
 function firstIssueMessage(error: { issues: { message: string }[] }) {
   return error.issues[0]?.message ?? "Invalid input";
@@ -81,7 +100,10 @@ export async function createProduct(
 
   const parsed = productSchema.safeParse(formToProductInput(formData));
   if (!parsed.success) {
-    return { error: firstIssueMessage(parsed.error) };
+    return {
+      error: firstIssueMessage(parsed.error),
+      values: formDataToStringValues(formData, PRODUCT_FORM_FIELDS),
+    };
   }
 
   const invoiceFile = formData.get("invoiceFile");
@@ -120,7 +142,10 @@ export async function updateProduct(
 
   const parsed = productSchema.safeParse(formToProductInput(formData));
   if (!parsed.success) {
-    return { error: firstIssueMessage(parsed.error) };
+    return {
+      error: firstIssueMessage(parsed.error),
+      values: formDataToStringValues(formData, PRODUCT_FORM_FIELDS),
+    };
   }
 
   const existing = await prisma.product.findUnique({ where: { id: productId } });
