@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { ProductCard } from "@/components/ProductCard";
 import type { Prisma } from "@/generated/prisma/client";
+
+export const metadata: Metadata = { title: "Products" };
 
 export default async function ProductsPage({
   searchParams,

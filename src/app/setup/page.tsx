@@ -1,8 +1,10 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { FileSignature } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { SetupForm } from "@/components/SetupForm";
 
+export const metadata: Metadata = { title: "Set up" };
 export const dynamic = "force-dynamic";
 
 export default async function SetupPage() {

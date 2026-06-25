@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -10,6 +11,8 @@ import {
 } from "@/lib/env";
 import { BackupNowForm } from "@/components/BackupNowForm";
 import { formatDate, humanFileSize } from "@/lib/utils";
+
+export const metadata: Metadata = { title: "Backups" };
 
 export default async function BackupsPage() {
   const session = await auth();

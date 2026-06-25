@@ -14,7 +14,7 @@ const sourceCodePro = Source_Code_Pro({
 });
 
 export const metadata: Metadata = {
-  title: "Contracts",
+  title: { default: "Contracts", template: "%s · Contracts" },
   description: "Track your personal contracts and never miss a renewal.",
   manifest: "/manifest.json",
   icons: {
