@@ -64,13 +64,17 @@ export const contractSchema = z.object({
       .max(100)
       .refine(
         (val) =>
-          val
-            .split(",")
-            .every((part) => part.trim() !== "" && Number.isFinite(Number(part.trim()))),
-        "Use a comma-separated list of numbers, e.g. 30,14,7,1",
+          val.split(",").every((part) => {
+            const n = Number(part.trim());
+            return part.trim() !== "" && Number.isFinite(n) && n >= 0;
+          }),
+        "Use a comma-separated list of non-negative numbers, e.g. 30,14,7,1",
       )
       .optional(),
   ),
-});
+}).refine(
+  (data) => !data.startDate || !data.endDate || data.endDate >= data.startDate,
+  { message: "End date can't be before the start date.", path: ["endDate"] },
+);
 
 export type ContractInput = z.infer<typeof contractSchema>;

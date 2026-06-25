@@ -22,13 +22,17 @@ export const productSchema = z.object({
       .max(100)
       .refine(
         (val) =>
-          val
-            .split(",")
-            .every((part) => part.trim() !== "" && Number.isFinite(Number(part.trim()))),
-        "Use a comma-separated list of numbers, e.g. 30,14,7,1",
+          val.split(",").every((part) => {
+            const n = Number(part.trim());
+            return part.trim() !== "" && Number.isFinite(n) && n >= 0;
+          }),
+        "Use a comma-separated list of non-negative numbers, e.g. 30,14,7,1",
       )
       .optional(),
   ),
-});
+}).refine(
+  (data) => !data.purchaseDate || !data.warrantyEndDate || data.warrantyEndDate >= data.purchaseDate,
+  { message: "Warranty end date can't be before the purchase date.", path: ["warrantyEndDate"] },
+);
 
 export type ProductInput = z.infer<typeof productSchema>;
