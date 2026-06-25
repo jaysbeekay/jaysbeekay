@@ -9,7 +9,7 @@ export function ProductCard({ product }: { product: ProductModel }) {
   return (
     <Link
       href={`/products/${product.id}`}
-      className="block rounded-lg border border-border bg-surface p-4 shadow-stripe transition hover:border-accent/50"
+      className="block min-w-0 rounded-lg border border-border bg-surface p-4 shadow-stripe transition hover:border-accent/50"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
