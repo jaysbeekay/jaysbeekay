@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { isEmailConfigured, isNtfyConfigured } from "@/lib/env";
 import { sendReminderEmail } from "@/lib/notifications/email";
 import { sendNtfyReminder } from "@/lib/notifications/ntfy";
+import { sendExpiryWebhooks, getEnabledWebhookEndpoints } from "@/lib/notifications/webhook";
 import { parseThresholds } from "@/lib/notifications/thresholds";
 import type { NotificationChannel } from "@/generated/prisma/enums";
 
@@ -15,7 +16,8 @@ function daysRemaining(endDate: Date, now: Date): number {
 export async function runExpirationCheck(now: Date = new Date()) {
   const emailEnabled = isEmailConfigured();
   const ntfyEnabled = isNtfyConfigured();
-  if (!emailEnabled && !ntfyEnabled) {
+  const webhookEnabled = (await getEnabledWebhookEndpoints()).length > 0;
+  if (!emailEnabled && !ntfyEnabled && !webhookEnabled) {
     return { checked: 0, sent: 0 };
   }
 
@@ -47,6 +49,7 @@ export async function runExpirationCheck(now: Date = new Date()) {
     const channels: NotificationChannel[] = [
       ...(emailEnabled && recipientEmails.length > 0 ? (["EMAIL"] as const) : []),
       ...(ntfyEnabled ? (["NTFY"] as const) : []),
+      ...(webhookEnabled ? (["WEBHOOK"] as const) : []),
     ];
 
     for (const channel of channels) {
@@ -74,13 +77,22 @@ export async function runExpirationCheck(now: Date = new Date()) {
               }),
             ),
           );
-        } else {
+        } else if (channel === "NTFY") {
           await sendNtfyReminder({
             kind: "contract",
             title: contract.title,
             detail: contract.provider,
             daysRemaining: remaining,
             endDate: contract.endDate,
+          });
+        } else {
+          await sendExpiryWebhooks({
+            kind: "contract",
+            id: contract.id,
+            title: contract.title,
+            detail: contract.provider,
+            daysRemaining: remaining,
+            endDate: contract.endDate as Date,
           });
         }
 
@@ -114,6 +126,7 @@ export async function runExpirationCheck(now: Date = new Date()) {
     const channels: NotificationChannel[] = [
       ...(emailEnabled && recipientEmails.length > 0 ? (["EMAIL"] as const) : []),
       ...(ntfyEnabled ? (["NTFY"] as const) : []),
+      ...(webhookEnabled ? (["WEBHOOK"] as const) : []),
     ];
 
     for (const channel of channels) {
@@ -142,13 +155,22 @@ export async function runExpirationCheck(now: Date = new Date()) {
               }),
             ),
           );
-        } else {
+        } else if (channel === "NTFY") {
           await sendNtfyReminder({
             kind: "warranty",
             title: product.name,
             detail,
             daysRemaining: remaining,
             endDate: product.warrantyEndDate,
+          });
+        } else {
+          await sendExpiryWebhooks({
+            kind: "warranty",
+            id: product.id,
+            title: product.name,
+            detail,
+            daysRemaining: remaining,
+            endDate: product.warrantyEndDate as Date,
           });
         }
 
