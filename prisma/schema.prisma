@@ -49,6 +49,7 @@ enum ContractStatus {
 enum NotificationChannel {
   EMAIL
   NTFY
+  WEBHOOK
 }
 
 enum ProductDocumentKind {
@@ -87,6 +88,7 @@ model User {
   createdAt         DateTime   @default(now())
   contracts         Contract[]
   products          Product[]
+  webhookEndpoints  WebhookEndpoint[]
 
   @@map("users")
 }
@@ -211,4 +213,34 @@ model BackupLog {
   finishedAt  DateTime?
 
   @@map("backup_logs")
+}
+
+model WebhookEndpoint {
+  id          String       @id @default(cuid())
+  name        String
+  url         String
+  secret      String?
+  enabled     Boolean      @default(true)
+
+  createdById String
+  createdBy   User         @relation(fields: [createdById], references: [id])
+
+  logs        WebhookLog[]
+
+  createdAt   DateTime     @default(now())
+
+  @@map("webhook_endpoints")
+}
+
+model WebhookLog {
+  id         String          @id @default(cuid())
+  endpointId String
+  endpoint   WebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+  event      String
+  success    Boolean
+  statusCode Int?
+  message    String?
+  sentAt     DateTime        @default(now())
+
+  @@map("webhook_logs")
 }

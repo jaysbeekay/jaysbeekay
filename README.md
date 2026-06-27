@@ -371,6 +371,61 @@ To restore: decrypt the downloaded file with AES-256-GCM using
 tag, the rest is the encrypted SQLite database), then replace `data/app.db`
 with the decrypted file while the app is stopped.
 
+## Webhooks
+
+The app can notify other platforms — e.g. [Home Assistant](https://www.home-assistant.io)
+or an MCP agent — when a contract or product warranty is approaching expiry,
+on the same schedule and thresholds as email/push reminders. Manage
+endpoints from **Settings → Webhooks** (admin only): add a URL, optionally
+set a signing secret, enable/disable, send a test delivery, and review the
+last 10 deliveries (success/failure, HTTP status, timestamp).
+
+Each delivery is a `POST` with a JSON body and these headers:
+
+| Header | Purpose |
+| --- | --- |
+| `X-Webhook-Event` | The event name (see below). |
+| `X-Webhook-Signature` | `sha256=<hex>`, an HMAC-SHA256 of the raw request body using the endpoint's signing secret. Only sent if a secret is configured. |
+
+Verify it by recomputing the HMAC over the exact request body with your
+secret and comparing to the header. Three events exist:
+
+- **`contract.expiring`** / **`warranty.expiring`** — sent once per
+  contract/product per threshold crossed (same dedup behavior as
+  email/push: adding something already past several thresholds sends one
+  catch-up delivery, not one per threshold). Body:
+
+  ```json
+  {
+    "event": "contract.expiring",
+    "kind": "contract",
+    "id": "...",
+    "title": "...",
+    "detail": "...",
+    "daysRemaining": 7,
+    "endDate": "2026-07-03",
+    "url": "http://<host>:3000/contracts/..."
+  }
+  ```
+
+- **`webhook.test`** — sent by the "Send test" button on the Settings page:
+
+  ```json
+  { "event": "webhook.test", "message": "This is a test notification from your Contracts app.", "sentAt": "..." }
+  ```
+
+For Home Assistant, point the URL at a
+[webhook trigger](https://www.home-assistant.io/docs/automation/trigger/#webhook-trigger)
+(`/api/webhook/<id>`) and branch the automation on `trigger.json.event`.
+For an MCP-based agent like Hermes, pair this with the read-only MCP server
+above — the webhook tells the agent something is expiring, and `/api/mcp`
+lets it look up the details and answer follow-up questions.
+
+If an endpoint is unreachable or returns a non-2xx status, that delivery
+is logged as failed and retried the next time the threshold check runs
+(same retry semantics as email) — other enabled endpoints still receive
+the same event.
+
 ## Native iOS app
 
 There's a thin native iOS wrapper in `ios/` (built with
@@ -424,6 +479,29 @@ threshold.
 - Uploaded documents are stored under generated UUID filenames, never the
   user-supplied name, to prevent path traversal.
 - Email/ntfy reminder text is sanitized against header injection.
+
+## Releasing
+
+Releases follow [Semantic Versioning](https://semver.org/), starting at
+`0.1.0`, and are tracked in [`CHANGELOG.md`](./CHANGELOG.md) under
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/) conventions.
+
+To cut a release:
+
+1. Move the relevant entries from `## [Unreleased]` in `CHANGELOG.md` into a
+   new `## [x.y.z] - YYYY-MM-DD` section (bump major for breaking changes,
+   minor for features, patch for fixes), and bump `"version"` in
+   `package.json` to match.
+2. Commit, then tag and push: `git tag vx.y.z && git push origin vx.y.z`.
+
+Pushing the tag triggers two workflows:
+
+- **`docker-publish.yml`** builds and pushes the image to Docker Hub as
+  [`jaysbeekay/contracts`](https://hub.docker.com/r/jaysbeekay/contracts),
+  tagged `vx.y.z` and (on every push to `main`) `latest`.
+- **`release.yml`** creates a GitHub Release named `vx.y.z`, with the body
+  pulled from the matching `CHANGELOG.md` section so each release captures
+  the functionality that shipped in it.
 
 ## License
 
