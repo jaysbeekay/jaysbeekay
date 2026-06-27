@@ -3,6 +3,11 @@ name: Create GitHub Release
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g. 0.1.0). Creates the vX.Y.Z tag if it doesn't exist yet."
+        required: true
 
 permissions:
   contents: write
@@ -14,16 +19,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Resolve tag
+        id: tag
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            NAME="v${{ inputs.version }}"
+          else
+            NAME="$GITHUB_REF_NAME"
+          fi
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+
       - name: Extract changelog section
         id: changelog
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${{ steps.tag.outputs.name }}"
+          VERSION="${VERSION#v}"
           NOTES=$(awk -v ver="[$VERSION]" '
             $0 ~ /^## \[/ { if (found) exit; if (index($0, ver)) { found=1; next } else next }
             found { print }
           ' CHANGELOG.md)
           if [ -z "$NOTES" ]; then
-            NOTES="_No changelog entry found for $GITHUB_REF_NAME — see commits below._"
+            NOTES="_No changelog entry found for ${{ steps.tag.outputs.name }} — see commits below._"
           fi
           {
             echo "notes<<RELEASE_NOTES_EOF"
@@ -34,6 +50,8 @@ jobs:
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          name: ${{ github.ref_name }}
+          tag_name: ${{ steps.tag.outputs.name }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ steps.tag.outputs.name }}
           body: ${{ steps.changelog.outputs.notes }}
           generate_release_notes: true
