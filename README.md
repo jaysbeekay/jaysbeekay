@@ -480,6 +480,29 @@ threshold.
   user-supplied name, to prevent path traversal.
 - Email/ntfy reminder text is sanitized against header injection.
 
+## Releasing
+
+Releases follow [Semantic Versioning](https://semver.org/), starting at
+`0.1.0`, and are tracked in [`CHANGELOG.md`](./CHANGELOG.md) under
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/) conventions.
+
+To cut a release:
+
+1. Move the relevant entries from `## [Unreleased]` in `CHANGELOG.md` into a
+   new `## [x.y.z] - YYYY-MM-DD` section (bump major for breaking changes,
+   minor for features, patch for fixes), and bump `"version"` in
+   `package.json` to match.
+2. Commit, then tag and push: `git tag vx.y.z && git push origin vx.y.z`.
+
+Pushing the tag triggers two workflows:
+
+- **`docker-publish.yml`** builds and pushes the image to Docker Hub as
+  [`jaysbeekay/contracts`](https://hub.docker.com/r/jaysbeekay/contracts),
+  tagged `vx.y.z` and (on every push to `main`) `latest`.
+- **`release.yml`** creates a GitHub Release named `vx.y.z`, with the body
+  pulled from the matching `CHANGELOG.md` section so each release captures
+  the functionality that shipped in it.
+
 ## License
 
 Private/personal project — no license specified.
