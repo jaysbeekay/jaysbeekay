@@ -75,6 +75,16 @@ enum BackupStatus {
   FAILURE
 }
 
+enum ModuleKey {
+  TRAVEL
+}
+
+enum TripSegmentType {
+  FLIGHT
+  LODGING
+  ACTIVITY
+}
+
 model User {
   id                String     @id @default(cuid())
   name              String
@@ -89,6 +99,7 @@ model User {
   contracts         Contract[]
   products          Product[]
   webhookEndpoints  WebhookEndpoint[]
+  trips             Trip[]
 
   @@map("users")
 }
@@ -243,4 +254,68 @@ model WebhookLog {
   sentAt     DateTime        @default(now())
 
   @@map("webhook_logs")
+}
+
+model ModuleEnablement {
+  id        String    @id @default(cuid())
+  key       ModuleKey @unique
+  enabled   Boolean   @default(false)
+  updatedAt DateTime  @updatedAt
+
+  @@map("module_enablements")
+}
+
+model Trip {
+  id          String        @id @default(cuid())
+  title       String
+  destination String?
+  startDate   DateTime?
+  endDate     DateTime?
+  notes       String?
+
+  createdById String
+  createdBy   User          @relation(fields: [createdById], references: [id])
+
+  segments    TripSegment[]
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@map("trips")
+}
+
+model TripSegment {
+  id               String                @id @default(cuid())
+  tripId           String
+  trip             Trip                  @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  type             TripSegmentType
+  title            String
+  provider         String?
+  confirmationCode String?
+  startDate        DateTime?
+  endDate          DateTime?
+  location         String?
+  cost             Float?
+  currency         String                @default("AUD")
+  notes            String?
+
+  documents        TripSegmentDocument[]
+
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  @@map("trip_segments")
+}
+
+model TripSegmentDocument {
+  id            String      @id @default(cuid())
+  tripSegmentId String
+  tripSegment   TripSegment @relation(fields: [tripSegmentId], references: [id], onDelete: Cascade)
+  filename      String
+  storedName    String
+  mimeType      String
+  size          Int
+  uploadedAt    DateTime    @default(now())
+
+  @@map("trip_segment_documents")
 }

@@ -3,18 +3,20 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { NAV_ITEMS } from "@/components/nav-items";
+import { getNavItems } from "@/components/nav-items";
+import type { ModuleKey } from "@/lib/modules/registry";
 
 function isActive(href: string, pathname: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function BottomNav() {
+export function BottomNav({ enabledModules }: { enabledModules: ModuleKey[] }) {
   const pathname = usePathname();
+  const items = getNavItems(new Set(enabledModules));
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-surface md:hidden">
-      {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+      {items.map(({ href, label, icon: Icon }) => {
         const active = isActive(href, pathname);
         return (
           <Link

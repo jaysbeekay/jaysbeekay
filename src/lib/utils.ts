@@ -91,3 +91,9 @@ export const RENEWAL_LABELS: Record<string, string> = {
   MANUAL_RENEWAL: "Manual renewal",
   FIXED_TERM: "Fixed term (ends, no renewal)",
 };
+
+export const TRIP_SEGMENT_TYPE_LABELS: Record<string, string> = {
+  FLIGHT: "Flight",
+  LODGING: "Lodging",
+  ACTIVITY: "Activity",
+};
