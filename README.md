@@ -491,17 +491,24 @@ To cut a release:
 1. Move the relevant entries from `## [Unreleased]` in `CHANGELOG.md` into a
    new `## [x.y.z] - YYYY-MM-DD` section (bump major for breaking changes,
    minor for features, patch for fixes), and bump `"version"` in
-   `package.json` to match.
-2. Commit, then tag and push: `git tag vx.y.z && git push origin vx.y.z`.
+   `package.json` to match. Merge this to `main`.
+2. Cut the tag, either:
+   - locally: `git tag vx.y.z && git push origin vx.y.z`, or
+   - from GitHub Actions: run `release.yml` manually (Actions → Create
+     GitHub Release → Run workflow) against `main` with `version` set to
+     `x.y.z`. This creates the tag for you, which is useful when a local
+     push to the tag isn't possible (e.g. restricted environments).
 
-Pushing the tag triggers two workflows:
+Cutting the tag creates `release.yml`'s GitHub Release, named `vx.y.z` with
+the body pulled from the matching `CHANGELOG.md` section so each release
+captures the functionality that shipped in it.
 
-- **`docker-publish.yml`** builds and pushes the image to Docker Hub as
-  [`jaysbeekay/contracts`](https://hub.docker.com/r/jaysbeekay/contracts),
-  tagged `vx.y.z` and (on every push to `main`) `latest`.
-- **`release.yml`** creates a GitHub Release named `vx.y.z`, with the body
-  pulled from the matching `CHANGELOG.md` section so each release captures
-  the functionality that shipped in it.
+`docker-publish.yml` builds and pushes the image to Docker Hub as
+[`jaysbeekay/contracts`](https://hub.docker.com/r/jaysbeekay/contracts),
+tagged `latest` on every push to `main` and `vx.y.z` on a real tag push. If
+the tag was cut via `release.yml`'s manual dispatch instead of a tag push,
+also run `docker-publish.yml` manually against the new tag to get the
+`vx.y.z` image tag.
 
 ## License
 
