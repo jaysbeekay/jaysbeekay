@@ -7,6 +7,8 @@ Versions follow [Semantic Versioning](https://semver.org/), starting at `0.1.0`.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-06-27
+
 ### Added
 
 - Contract and product/warranty tracking with CRUD, list views, and expiry
