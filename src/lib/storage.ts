@@ -15,16 +15,18 @@ export const ALLOWED_MIME_TYPES = new Set([
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ]);
 
+// IDs are always database-sourced cuids, but path.basename() strips any
+// directory-traversal characters defensively in case that ever changes.
 function contractDir(contractId: string) {
-  return path.join(path.resolve(env.uploadsDir), contractId);
+  return path.join(path.resolve(env.uploadsDir), path.basename(contractId));
 }
 
 function productDir(productId: string) {
-  return path.join(path.resolve(env.uploadsDir), "products", productId);
+  return path.join(path.resolve(env.uploadsDir), "products", path.basename(productId));
 }
 
 function tripSegmentDir(tripSegmentId: string) {
-  return path.join(path.resolve(env.uploadsDir), "trip-segments", tripSegmentId);
+  return path.join(path.resolve(env.uploadsDir), "trip-segments", path.basename(tripSegmentId));
 }
 
 // storedName is always a freshly generated UUID plus a sanitized extension,
