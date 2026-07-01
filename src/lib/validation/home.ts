@@ -20,6 +20,7 @@ export const homeItemSchema = z.object({
   date: z.preprocess(emptyToUndefined, z.coerce.date().optional()),
   cost: z.preprocess(emptyToUndefined, z.coerce.number().min(0).optional()),
   currency: z.string().trim().min(1).max(10).default("AUD"),
+  isTaxDeductible: z.boolean().default(false),
   notes: z.preprocess(emptyToUndefined, z.string().trim().max(5000).optional()),
 });
 

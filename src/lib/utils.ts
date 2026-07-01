@@ -104,3 +104,33 @@ export const HOME_ITEM_TYPE_LABELS: Record<string, string> = {
   REPAIR: "Repair",
   OTHER: "Other",
 };
+
+// AU financial year runs 1 Jul–30 Jun; e.g. 15 Mar 2026 and 1 Aug 2025 are both "FY2025–26".
+export function financialYearLabel(date: Date) {
+  const startYear = date.getMonth() >= 6 ? date.getFullYear() : date.getFullYear() - 1;
+  return `FY${startYear}–${String(startYear + 1).slice(-2)}`;
+}
+
+export interface YearTotal {
+  label: string;
+  amount: number;
+  currency: string;
+}
+
+export function sumByYear(
+  items: { cost: number | null; date: Date | null; currency: string }[],
+  labelFor: (date: Date) => string,
+): YearTotal[] {
+  const totals = new Map<string, number>();
+  for (const item of items) {
+    if (item.cost == null || !item.date) continue;
+    const key = `${labelFor(item.date)}|${item.currency}`;
+    totals.set(key, (totals.get(key) ?? 0) + item.cost);
+  }
+  return [...totals.entries()]
+    .map(([key, amount]) => {
+      const [label, currency] = key.split("|");
+      return { label, amount, currency };
+    })
+    .sort((a, b) => b.label.localeCompare(a.label));
+}

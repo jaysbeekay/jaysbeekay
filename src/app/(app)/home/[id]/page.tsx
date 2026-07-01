@@ -112,7 +112,14 @@ export default async function PropertyDetailPage({
                         <p className="text-sm text-foreground/60">
                           {HOME_ITEM_TYPE_LABELS[item.type] ?? item.type}
                         </p>
-                        <p className="font-medium">{item.title}</p>
+                        <p className="flex flex-wrap items-center gap-2 font-medium">
+                          {item.title}
+                          {item.isTaxDeductible && (
+                            <span className="rounded-full bg-success/10 px-2 py-0.5 text-xs font-normal text-success">
+                              Tax deductible
+                            </span>
+                          )}
+                        </p>
                         {item.provider && (
                           <p className="text-sm text-foreground/70">{item.provider}</p>
                         )}

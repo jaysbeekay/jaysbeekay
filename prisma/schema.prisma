@@ -356,6 +356,7 @@ model HomeItem {
   date       DateTime?
   cost       Float?
   currency   String             @default("AUD")
+  isTaxDeductible Boolean       @default(false)
   notes      String?
 
   documents  HomeItemDocument[]

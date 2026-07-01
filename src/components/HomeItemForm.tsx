@@ -169,6 +169,23 @@ export function HomeItemForm({
         </Field>
       </div>
 
+      <div className="flex items-center gap-2">
+        <input
+          id="isTaxDeductible"
+          name="isTaxDeductible"
+          type="checkbox"
+          defaultChecked={
+            state?.values?.isTaxDeductible != null
+              ? state.values.isTaxDeductible === "on"
+              : (item?.isTaxDeductible ?? false)
+          }
+          className="size-4 rounded border-border accent-accent"
+        />
+        <label htmlFor="isTaxDeductible" className="text-sm">
+          Tax deductible
+        </label>
+      </div>
+
       <Field label="Notes" htmlFor="notes">
         <textarea
           id="notes"

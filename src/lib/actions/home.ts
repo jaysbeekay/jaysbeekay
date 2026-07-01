@@ -18,7 +18,16 @@ import type { ActionState } from "@/lib/actions/auth";
 
 const PROPERTY_FORM_FIELDS = ["label", "address", "notes"];
 
-const HOME_ITEM_FORM_FIELDS = ["type", "title", "provider", "date", "cost", "currency", "notes"];
+const HOME_ITEM_FORM_FIELDS = [
+  "type",
+  "title",
+  "provider",
+  "date",
+  "cost",
+  "currency",
+  "isTaxDeductible",
+  "notes",
+];
 
 function firstIssueMessage(error: { issues: { message: string }[] }) {
   return error.issues[0]?.message ?? "Invalid input";
@@ -66,6 +75,7 @@ function formToHomeItemInput(formData: FormData) {
     date: formData.get("date"),
     cost: formData.get("cost"),
     currency: formData.get("currency") || "AUD",
+    isTaxDeductible: formData.get("isTaxDeductible") === "on",
     notes: formData.get("notes"),
   };
 }
