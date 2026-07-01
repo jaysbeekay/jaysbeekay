@@ -1,19 +1,5 @@
 import nodemailer from "nodemailer";
-import { env, isEmailConfigured } from "@/lib/env";
-
-let transporter: ReturnType<typeof nodemailer.createTransport> | null = null;
-
-function getTransporter() {
-  if (!transporter) {
-    transporter = nodemailer.createTransport({
-      host: env.smtp.host,
-      port: env.smtp.port,
-      secure: env.smtp.secure,
-      auth: env.smtp.user ? { user: env.smtp.user, pass: env.smtp.pass } : undefined,
-    });
-  }
-  return transporter;
-}
+import { getSmtpConfig, isSmtpConfigured } from "@/lib/appSettings";
 
 // Header values must never contain raw newlines, regardless of nodemailer's
 // own escaping, to defend against header/CRLF injection from contract titles.
@@ -29,7 +15,15 @@ export async function sendReminderEmail(opts: {
   daysRemaining: number;
   endDate: Date;
 }) {
-  if (!isEmailConfigured()) return;
+  if (!(await isSmtpConfigured())) return;
+
+  const smtp = await getSmtpConfig();
+  const transporter = nodemailer.createTransport({
+    host: smtp.host,
+    port: smtp.port,
+    secure: smtp.secure,
+    auth: smtp.user ? { user: smtp.user, pass: smtp.pass } : undefined,
+  });
 
   const subject = stripNewlines(
     `Reminder: "${opts.title}" ${opts.kind} expires in ${opts.daysRemaining} day${
@@ -43,8 +37,8 @@ export async function sendReminderEmail(opts: {
     day: "numeric",
   });
 
-  await getTransporter().sendMail({
-    from: env.smtp.from,
+  await transporter.sendMail({
+    from: smtp.from,
     to: opts.to,
     subject,
     text: `Your ${opts.kind} "${opts.title}" (${opts.detail}) expires on ${formattedDate} (${opts.daysRemaining} day(s) from now).\n\nLog in to your contracts app to review it.`,

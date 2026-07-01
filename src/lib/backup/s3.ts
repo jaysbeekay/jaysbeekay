@@ -4,37 +4,39 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
-import { env } from "@/lib/env";
+import { getS3Config } from "@/lib/appSettings";
 
 const KEY_PREFIX = "backups/";
 
-function client(): S3Client {
-  return new S3Client({
-    endpoint: env.backup.s3.endpoint || undefined,
-    region: env.backup.s3.region,
-    forcePathStyle: env.backup.s3.forcePathStyle,
+async function getClient(): Promise<{ s3: S3Client; cfg: Awaited<ReturnType<typeof getS3Config>> }> {
+  const cfg = await getS3Config();
+  const s3 = new S3Client({
+    endpoint: cfg.endpoint || undefined,
+    region: cfg.region,
+    forcePathStyle: cfg.forcePathStyle,
     credentials: {
-      accessKeyId: env.backup.s3.accessKeyId,
-      secretAccessKey: env.backup.s3.secretAccessKey,
+      accessKeyId: cfg.accessKeyId,
+      secretAccessKey: cfg.secretAccessKey,
     },
   });
+  return { s3, cfg };
 }
 
 export async function uploadToS3(data: Buffer, fileName: string): Promise<void> {
-  await client().send(
+  const { s3, cfg } = await getClient();
+  await s3.send(
     new PutObjectCommand({
-      Bucket: env.backup.s3.bucket,
+      Bucket: cfg.bucket,
       Key: `${KEY_PREFIX}${fileName}`,
       Body: data,
     }),
   );
 }
 
-// Deletes the oldest backups beyond the configured retention count.
 export async function pruneS3(retentionCount: number): Promise<void> {
-  const s3 = client();
+  const { s3, cfg } = await getClient();
   const listing = await s3.send(
-    new ListObjectsV2Command({ Bucket: env.backup.s3.bucket, Prefix: KEY_PREFIX }),
+    new ListObjectsV2Command({ Bucket: cfg.bucket, Prefix: KEY_PREFIX }),
   );
 
   const objects = (listing.Contents ?? [])
@@ -43,6 +45,6 @@ export async function pruneS3(retentionCount: number): Promise<void> {
 
   const toDelete = objects.slice(retentionCount);
   for (const obj of toDelete) {
-    await s3.send(new DeleteObjectCommand({ Bucket: env.backup.s3.bucket, Key: obj.Key! }));
+    await s3.send(new DeleteObjectCommand({ Bucket: cfg.bucket, Key: obj.Key! }));
   }
 }

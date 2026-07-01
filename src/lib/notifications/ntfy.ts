@@ -1,4 +1,4 @@
-import { env, isNtfyConfigured } from "@/lib/env";
+import { getNtfyConfig, isNtfyConfigured } from "@/lib/appSettings";
 
 function stripNewlines(value: string) {
   return value.replace(/[\r\n]+/g, " ").trim();
@@ -11,9 +11,10 @@ export async function sendNtfyReminder(opts: {
   daysRemaining: number;
   endDate: Date;
 }) {
-  if (!isNtfyConfigured()) return;
+  if (!(await isNtfyConfigured())) return;
 
-  const url = `${env.ntfy.url.replace(/\/$/, "")}/${env.ntfy.topic}`;
+  const ntfy = await getNtfyConfig();
+  const url = `${ntfy.url.replace(/\/$/, "")}/${ntfy.topic}`;
   const formattedDate = opts.endDate.toLocaleDateString("en-AU", {
     year: "numeric",
     month: "long",
@@ -29,8 +30,8 @@ export async function sendNtfyReminder(opts: {
     Priority: opts.daysRemaining <= 7 ? "high" : "default",
     Tags: "warning,calendar",
   };
-  if (env.ntfy.token) {
-    headers.Authorization = `Bearer ${env.ntfy.token}`;
+  if (ntfy.token) {
+    headers.Authorization = `Bearer ${ntfy.token}`;
   }
 
   const response = await fetch(url, {

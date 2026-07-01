@@ -1,7 +1,12 @@
 import { readFile } from "fs/promises";
 import { prisma } from "@/lib/prisma";
 import { encryptBuffer } from "@/lib/crypto";
-import { env, isBackupConfigured, isS3BackupConfigured, isSftpBackupConfigured } from "@/lib/env";
+import {
+  isBackupConfigured,
+  isS3BackupConfigured,
+  isSftpBackupConfigured,
+  getBackupScheduleConfig,
+} from "@/lib/appSettings";
 import { createSnapshot } from "@/lib/backup/snapshot";
 import { pruneS3, uploadToS3 } from "@/lib/backup/s3";
 import { pruneSftp, uploadToSftp } from "@/lib/backup/sftp";
@@ -10,14 +15,15 @@ import type { BackupDestination } from "@/generated/prisma/enums";
 type Destination = {
   name: BackupDestination;
   upload: () => Promise<void>;
-  prune: () => Promise<void>;
+  prune: (retentionCount: number) => Promise<void>;
 };
 
 export async function runBackup(): Promise<{ attempted: number; succeeded: number; failed: number }> {
-  if (!isBackupConfigured()) {
+  if (!(await isBackupConfigured())) {
     return { attempted: 0, succeeded: 0, failed: 0 };
   }
 
+  const { retentionCount } = await getBackupScheduleConfig();
   const snapshot = await createSnapshot();
 
   try {
@@ -26,18 +32,18 @@ export async function runBackup(): Promise<{ attempted: number; succeeded: numbe
     const fileName = `contracts-${new Date().toISOString().replace(/[:.]/g, "-")}.db.enc`;
 
     const destinations: Destination[] = [];
-    if (isS3BackupConfigured()) {
+    if (await isS3BackupConfigured()) {
       destinations.push({
         name: "S3",
         upload: () => uploadToS3(encrypted, fileName),
-        prune: () => pruneS3(env.backup.retentionCount),
+        prune: (n) => pruneS3(n),
       });
     }
-    if (isSftpBackupConfigured()) {
+    if (await isSftpBackupConfigured()) {
       destinations.push({
         name: "SFTP",
         upload: () => uploadToSftp(encrypted, fileName),
-        prune: () => pruneSftp(env.backup.retentionCount),
+        prune: (n) => pruneSftp(n),
       });
     }
 
@@ -48,7 +54,7 @@ export async function runBackup(): Promise<{ attempted: number; succeeded: numbe
       const startedAt = new Date();
       try {
         await destination.upload();
-        await destination.prune();
+        await destination.prune(retentionCount);
         await prisma.backupLog.create({
           data: {
             destination: destination.name,

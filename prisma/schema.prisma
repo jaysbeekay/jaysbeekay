@@ -222,6 +222,15 @@ model ProductNotificationLog {
   @@map("product_notification_logs")
 }
 
+model AppSetting {
+  key       String   @id
+  value     String?
+  encrypted Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  @@map("app_settings")
+}
+
 model BackupLog {
   id          String            @id @default(cuid())
   destination BackupDestination
