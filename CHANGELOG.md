@@ -7,6 +7,39 @@ Versions follow [Semantic Versioning](https://semver.org/), starting at `0.1.0`.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-01
+
+### Added
+
+- **Opt-in module system** — admins choose which modules to enable at
+  first-run setup and can toggle them on/off later from Settings > Modules.
+  Nav items and all routes for disabled modules are hidden and redirect to
+  the dashboard.
+- **Travel module** — TripIt-style itinerary tracker with Flight, Lodging,
+  and Activity segment types. Supports AI-assisted field extraction from
+  uploaded confirmation documents (mirroring the existing Contract flow),
+  manual entry, and per-segment document storage with authenticated download.
+- **Home module** — property and maintenance/improvement/repair tracker.
+  Track multiple properties with address, notes, and a full item history
+  including provider, date, cost, and supporting documents. AI-assisted
+  field extraction from uploaded invoices is supported.
+- **Tax-deductible tracking** on home items — mark individual items as tax
+  deductible and see a summary of tax-deductible spend broken down by AU
+  financial year (1 Jul–30 Jun) on the Home list page.
+- **Playwright e2e test suite** (28 tests) covering regression, module-toggle
+  gating, Travel CRUD, upload security, and authorisation, running
+  automatically on every push and pull request via GitHub Actions.
+
+### Fixed
+
+- Document upload body-size limits now consistently allow up to 15 MB across
+  both Server Actions and API routes (previously the Server Action limit was
+  1 MB, causing uploads over that size to hard-crash rather than show a
+  friendly validation error).
+- Heuristic field extraction: `findCost` no longer over-matches on the word
+  "fee"; `findCompanyLine` skips lines containing dollar amounts or GST/total
+  keywords so tax-summary lines are not mistaken for a company name.
+
 ## [0.1.0] - 2026-06-27
 
 ### Added
