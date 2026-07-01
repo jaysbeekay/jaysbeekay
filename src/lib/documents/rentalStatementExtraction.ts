@@ -1,88 +1,60 @@
 import { getOllamaConfig, isOllamaConfigured } from "@/lib/appSettings";
-import { BILLING_FREQUENCIES } from "@/lib/validation/contract";
 import {
   findCompanyLine,
   findCost,
-  findEmail,
   findLabeledDate,
   findLabeledValue,
-  findPhone,
 } from "@/lib/documents/textHeuristics";
 import { extractWithByok, isByokConfigured } from "@/lib/ai/extract";
 import { parseJsonObject, whitelistFields } from "@/lib/ai/parseJson";
 import type { ByokUser } from "@/lib/ai/types";
 
-export interface ExtractedFields {
-  title?: string;
-  provider?: string;
-  contractNumber?: string;
-  startDate?: string;
-  endDate?: string;
-  cost?: string;
-  billingFrequency?: string;
-  contactName?: string;
-  contactPhone?: string;
-  contactEmail?: string;
+export interface ExtractedRentalStatementFields {
+  periodStart?: string;
+  periodEnd?: string;
+  statementDate?: string;
+  grossRent?: string;
+  managementFee?: string;
+  otherDeductions?: string;
+  netAmount?: string;
 }
 
 const FIELD_KEYS = [
-  "title",
-  "provider",
-  "contractNumber",
-  "startDate",
-  "endDate",
-  "cost",
-  "billingFrequency",
-  "contactName",
-  "contactPhone",
-  "contactEmail",
+  "periodStart",
+  "periodEnd",
+  "statementDate",
+  "grossRent",
+  "managementFee",
+  "otherDeductions",
+  "netAmount",
 ] as const;
 
-function findBillingFrequency(text: string): string | undefined {
-  const lower = text.toLowerCase();
-  if (/\bweekly\b/.test(lower)) return "WEEKLY";
-  if (/\bmonthly\b/.test(lower)) return "MONTHLY";
-  if (/\bquarterly\b/.test(lower)) return "QUARTERLY";
-  if (/\b(annual(ly)?|yearly|per annum|p\.a\.)\b/.test(lower)) return "ANNUALLY";
-  if (/\bone[\s-]?(off|time)\b/.test(lower)) return "ONE_OFF";
-  return undefined;
-}
+const AMOUNT_PATTERN = /(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/;
 
-function heuristicExtract(text: string): ExtractedFields {
+function heuristicExtract(text: string): ExtractedRentalStatementFields {
   return {
-    provider: findCompanyLine(text),
-    contractNumber: findLabeledValue(
-      text,
-      /(account|policy|contract|reference|customer|member)\s*(no\.?|number|id)/i,
-      /[:#]?\s*([A-Za-z0-9-/]{4,30})\s*$/,
-    ),
-    startDate: findLabeledDate(
-      text,
-      /(start date|commencement|effective date|policy start|contract start|term start|cover start)/i,
-    ),
-    endDate: findLabeledDate(
-      text,
-      /(end date|expiry|expiration|renewal date|valid until|valid to|policy end|contract end|term end|cover end)/i,
-    ),
-    cost: findCost(text),
-    billingFrequency: findBillingFrequency(text),
-    contactPhone: findPhone(text),
-    contactEmail: findEmail(text),
+    statementDate: findLabeledDate(text, /(statement date|invoice date|date|issued)/i),
+    periodStart: findLabeledDate(text, /(period (from|start)|from|rental period start)/i),
+    periodEnd: findLabeledDate(text, /(period (to|end)|to|rental period end)/i),
+    grossRent: findLabeledValue(text, /(gross rent|rent received|rental income|rent)/i, AMOUNT_PATTERN),
+    managementFee: findLabeledValue(text, /(management fee|mgmt fee|management commission)/i, AMOUNT_PATTERN),
+    otherDeductions: findLabeledValue(text, /(other deductions?|deductions?|repairs?|water|council)/i, AMOUNT_PATTERN),
+    netAmount: findLabeledValue(text, /(net (amount|proceeds|remittance)|amount (payable|remitted)|total payable)/i, AMOUNT_PATTERN) ?? findCost(text),
   };
 }
 
-function countFound(fields: ExtractedFields): number {
+function countFound(fields: ExtractedRentalStatementFields): number {
   return Object.values(fields).filter((v) => v != null && v !== "").length;
 }
 
 const EXTRACTION_INSTRUCTIONS =
-  "Extract contract details from this document as a single JSON object " +
-  "with these optional keys: title, provider, contractNumber, startDate (YYYY-MM-DD), " +
-  `endDate (YYYY-MM-DD), cost (number only, no currency symbol), billingFrequency (one of ` +
-  `${BILLING_FREQUENCIES.join(", ")}), contactName, contactPhone, contactEmail. Omit keys ` +
-  "you cannot determine. Respond with JSON only, no other text.";
+  "Extract rental statement/property management invoice details from this document as a single JSON object " +
+  "with these optional keys: statementDate (YYYY-MM-DD), periodStart (YYYY-MM-DD), periodEnd (YYYY-MM-DD), " +
+  "grossRent (number, no currency symbol), managementFee (number), otherDeductions (number), " +
+  "netAmount (number — the amount paid to the owner after all deductions). " +
+  "Omit keys you cannot determine. Respond with JSON only, no other text.";
 
-async function llmExtract(text: string): Promise<ExtractedFields | null> {
+async function llmExtract(text: string): Promise<ExtractedRentalStatementFields | null> {
   const ollama = await getOllamaConfig();
   const prompt = `${EXTRACTION_INSTRUCTIONS}\n\nDocument text:\n${text.slice(0, 6000)}`;
 
@@ -114,7 +86,7 @@ async function byokExtract(
   byokUser: ByokUser,
   buffer: Buffer,
   mimeType: string,
-): Promise<ExtractedFields | null> {
+): Promise<ExtractedRentalStatementFields | null> {
   const raw = await extractWithByok(byokUser, buffer, mimeType, EXTRACTION_INSTRUCTIONS);
   if (!raw) return null;
   const parsed = parseJsonObject(raw);
@@ -122,14 +94,15 @@ async function byokExtract(
   return whitelistFields(parsed, FIELD_KEYS);
 }
 
-// Below this many matched fields, the regex pass is considered unreliable
-// (e.g. an unusual layout or noisy OCR) and worth retrying with an LLM.
 const LOW_CONFIDENCE_THRESHOLD = 2;
 
-export async function extractContractFields(
+export async function extractRentalStatementFields(
   text: string,
   options: { buffer?: Buffer; mimeType?: string; byokUser?: ByokUser | null } = {},
-): Promise<{ fields: ExtractedFields; source: "byok" | "heuristic" | "llm" | "none" }> {
+): Promise<{
+  fields: ExtractedRentalStatementFields;
+  source: "byok" | "heuristic" | "llm" | "none";
+}> {
   if (!text.trim() && !options.buffer) return { fields: {}, source: "none" };
 
   const heuristic = heuristicExtract(text);

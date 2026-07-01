@@ -1,4 +1,4 @@
-import { env, isOllamaConfigured } from "@/lib/env";
+import { getOllamaConfig, isOllamaConfigured } from "@/lib/appSettings";
 import { TRIP_SEGMENT_TYPES } from "@/lib/validation/travel";
 import {
   findCompanyLine,
@@ -77,15 +77,16 @@ const EXTRACTION_INSTRUCTIONS =
   "no currency symbol). Omit keys you cannot determine. Respond with JSON only, no other text.";
 
 async function llmExtract(text: string): Promise<ExtractedTripSegmentFields | null> {
+  const ollama = await getOllamaConfig();
   const prompt = `${EXTRACTION_INSTRUCTIONS}\n\nDocument text:\n${text.slice(0, 6000)}`;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 45_000);
   try {
-    const res = await fetch(`${env.ollama.baseUrl}/api/generate`, {
+    const res = await fetch(`${ollama.baseUrl}/api/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model: env.ollama.model, prompt, format: "json", stream: false }),
+      body: JSON.stringify({ model: ollama.model, prompt, format: "json", stream: false }),
       signal: controller.signal,
     });
     if (!res.ok) return null;
@@ -137,7 +138,7 @@ export async function extractTripSegmentFields(
     }
   }
 
-  if (isOllamaConfigured()) {
+  if (await isOllamaConfigured()) {
     const llm = await llmExtract(text);
     if (llm && countFound(llm) > 0) {
       return { fields: { ...heuristic, ...llm }, source: "llm" };

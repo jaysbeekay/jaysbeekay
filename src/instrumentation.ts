@@ -7,31 +7,35 @@ export async function register() {
   };
 
   const cron = await import("node-cron");
-  const { env, isBackupConfigured } = await import("@/lib/env");
+  const { getReminderConfig, isBackupConfigured, getBackupScheduleConfig } = await import(
+    "@/lib/appSettings"
+  );
 
   if (!globalForCron.__reminderCronStarted) {
     globalForCron.__reminderCronStarted = true;
 
     const { runExpirationCheck } = await import("@/lib/notifications/scheduler");
-    cron.schedule(env.reminderCron, () => {
+    const { cron: reminderCron } = await getReminderConfig();
+    cron.schedule(reminderCron, () => {
       runExpirationCheck().catch((error) => {
         console.error("[notifications] scheduled expiration check failed:", error);
       });
     });
 
-    console.log(`[notifications] reminder scheduler started (cron: "${env.reminderCron}")`);
+    console.log(`[notifications] reminder scheduler started (cron: "${reminderCron}")`);
   }
 
-  if (!globalForCron.__backupCronStarted && isBackupConfigured()) {
+  if (!globalForCron.__backupCronStarted && (await isBackupConfigured())) {
     globalForCron.__backupCronStarted = true;
 
     const { runBackup } = await import("@/lib/backup/scheduler");
-    cron.schedule(env.backup.cron, () => {
+    const { cron: backupCron } = await getBackupScheduleConfig();
+    cron.schedule(backupCron, () => {
       runBackup().catch((error) => {
         console.error("[backup] scheduled backup failed:", error);
       });
     });
 
-    console.log(`[backup] scheduler started (cron: "${env.backup.cron}")`);
+    console.log(`[backup] scheduler started (cron: "${backupCron}")`);
   }
 }

@@ -1,7 +1,5 @@
-import { env } from "@/lib/env";
-
-export function parseThresholds(value: string | null | undefined): number[] {
-  const source = value && value.trim() ? value : env.reminderDefaultDays;
+export function parseThresholds(value: string | null | undefined, defaultDays = "30,14,7,1"): number[] {
+  const source = value && value.trim() ? value : defaultDays;
   const days = source
     .split(",")
     .map((part) => Number(part.trim()))

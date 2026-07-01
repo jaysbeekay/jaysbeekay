@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isEncryptionConfigured } from "@/lib/env";
 import {
-  env,
   isBackupConfigured,
-  isEncryptionConfigured,
   isS3BackupConfigured,
   isSftpBackupConfigured,
-} from "@/lib/env";
+  getBackupScheduleConfig,
+} from "@/lib/appSettings";
 import { BackupNowForm } from "@/components/BackupNowForm";
 import { formatDate, humanFileSize } from "@/lib/utils";
 
@@ -20,10 +20,13 @@ export default async function BackupsPage() {
     redirect("/settings");
   }
 
-  const logs = await prisma.backupLog.findMany({
-    orderBy: { startedAt: "desc" },
-    take: 10,
-  });
+  const [logs, s3Configured, sftpConfigured, backupOk, backupSchedule] = await Promise.all([
+    prisma.backupLog.findMany({ orderBy: { startedAt: "desc" }, take: 10 }),
+    isS3BackupConfigured(),
+    isSftpBackupConfigured(),
+    isBackupConfigured(),
+    getBackupScheduleConfig(),
+  ]);
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -35,21 +38,21 @@ export default async function BackupsPage() {
           <li>
             Encryption: {isEncryptionConfigured() ? "configured" : "not configured"}
           </li>
-          <li>S3-compatible storage: {isS3BackupConfigured() ? "configured" : "not configured"}</li>
-          <li>SFTP: {isSftpBackupConfigured() ? "configured" : "not configured"}</li>
-          <li>Schedule: {env.backup.cron}</li>
-          <li>Retention: last {env.backup.retentionCount} backups per destination</li>
+          <li>S3-compatible storage: {s3Configured ? "configured" : "not configured"}</li>
+          <li>SFTP: {sftpConfigured ? "configured" : "not configured"}</li>
+          <li>Schedule: {backupSchedule.cron}</li>
+          <li>Retention: last {backupSchedule.retentionCount} backups per destination</li>
         </ul>
 
-        {!isBackupConfigured() && (
+        {!backupOk && (
           <p className="mt-3 text-sm text-amber-600 dark:text-amber-400">
             {isEncryptionConfigured()
-              ? "Set BACKUP_S3_* or BACKUP_SFTP_* environment variables to enable offsite backups."
-              : "Set ENCRYPTION_KEY, plus BACKUP_S3_* or BACKUP_SFTP_* environment variables, to enable offsite backups. Backups are never sent unencrypted."}
+              ? "Configure S3 or SFTP in System settings to enable offsite backups."
+              : "Set ENCRYPTION_KEY, then configure S3 or SFTP in System settings to enable offsite backups. Backups are never sent unencrypted."}
           </p>
         )}
 
-        {isBackupConfigured() && (
+        {backupOk && (
           <div className="mt-4">
             <BackupNowForm />
           </div>

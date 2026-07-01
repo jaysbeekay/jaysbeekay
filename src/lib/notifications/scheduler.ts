@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { isEmailConfigured, isNtfyConfigured } from "@/lib/env";
+import { isSmtpConfigured, isNtfyConfigured, getReminderConfig } from "@/lib/appSettings";
 import { sendReminderEmail } from "@/lib/notifications/email";
 import { sendNtfyReminder } from "@/lib/notifications/ntfy";
 import { sendExpiryWebhooks, getEnabledWebhookEndpoints } from "@/lib/notifications/webhook";
@@ -14,8 +14,9 @@ function daysRemaining(endDate: Date, now: Date): number {
 }
 
 export async function runExpirationCheck(now: Date = new Date()) {
-  const emailEnabled = isEmailConfigured();
-  const ntfyEnabled = isNtfyConfigured();
+  const { defaultDays } = await getReminderConfig();
+  const emailEnabled = await isSmtpConfigured();
+  const ntfyEnabled = await isNtfyConfigured();
   const webhookEnabled = (await getEnabledWebhookEndpoints()).length > 0;
   if (!emailEnabled && !ntfyEnabled && !webhookEnabled) {
     return { checked: 0, sent: 0 };
@@ -42,7 +43,7 @@ export async function runExpirationCheck(now: Date = new Date()) {
     const remaining = daysRemaining(contract.endDate, now);
     if (remaining < 0) continue;
 
-    const thresholds = parseThresholds(contract.reminderDaysBefore);
+    const thresholds = parseThresholds(contract.reminderDaysBefore, defaultDays);
     const dueThresholds = thresholds.filter((t) => remaining <= t);
     if (dueThresholds.length === 0) continue;
 
@@ -119,7 +120,7 @@ export async function runExpirationCheck(now: Date = new Date()) {
     const remaining = daysRemaining(product.warrantyEndDate, now);
     if (remaining < 0) continue;
 
-    const thresholds = parseThresholds(product.reminderDaysBefore);
+    const thresholds = parseThresholds(product.reminderDaysBefore, defaultDays);
     const dueThresholds = thresholds.filter((t) => remaining <= t);
     if (dueThresholds.length === 0) continue;
 
