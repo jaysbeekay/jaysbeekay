@@ -1,30 +1,42 @@
-# Personal Document Management
+# Hearth
 
-A self-hostable web app for tracking personal contracts — rentals, car/home/strata
-insurance, subscriptions, loans, and more — and product warranties, with
-reminders before either expires.
+A self-hostable household management app. Track contracts and warranties, plan
+trips, log home maintenance, and manage rental properties — all in one place,
+with optional reminders before anything expires.
 
 ## Features
 
-- Track contracts with provider, dates, cost/billing frequency, renewal type,
-  notice period, contact details, and free-form notes
-- Track product warranties with manufacturer, vendor, serial number, purchase
-  date, warranty end date, and price — attach the invoice and a product photo
-- Scan a product's barcode (UPC/EAN) with the camera when adding it — looks
-  it up against an online database to auto-fill its name and brand
-- Attach documents (PDF/images/Word docs) to each contract or product —
-  uploading an invoice/PDF/photo when creating a contract or product auto-fills
-  fields like provider/manufacturer, dates, and cost/price
-- Optional bring-your-own-key AI extraction (Claude/Gemini/OpenAI) for
-  higher-accuracy field extraction from documents, fully opt-in per user
-- Dashboard with active/expiring/expired counts and estimated monthly spend,
-  for both contracts and warranties
+**Contracts & warranties**
+- Track contracts (insurance, telecom, subscriptions, loans, rentals, and more)
+  with provider, dates, cost, billing frequency, renewal type, and contact details
+- Track product warranties with manufacturer, vendor, serial number, purchase date,
+  and price — attach an invoice or product photo
+- Scan a product's barcode (UPC/EAN) to auto-fill name and brand from an online database
+- Attach documents (PDF/images/Word) to contracts or products — uploading a document
+  auto-fills fields like provider, dates, and cost via AI/heuristic extraction
 - Configurable reminder thresholds per contract/product (e.g. 30/14/7/1 days before expiry)
 - Reminders via email (SMTP) and/or push notifications ([ntfy](https://ntfy.sh))
-- Multi-user/household accounts — everyone in the household sees the same contracts
-- Admin-invite-only accounts (no public sign-up) since this stores sensitive data
+
+**Travel** *(opt-in module)*
+- Plan trips as itineraries with flight, lodging, and activity segments
+- Upload booking confirmations — AI extraction pre-fills confirmation codes, dates, locations, and costs
+- Shared household-wide so all members can view each other's trips
+
+**Home** *(opt-in module)*
+- Track properties and log maintenance, repairs, and improvements against each one
+- Attach receipts/invoices and record costs, providers, and dates
+- Manage rental agreements and track rental income statements per property
+
+**Platform**
+- Optional bring-your-own-key AI extraction (Claude/Gemini/OpenAI) per user for higher accuracy
+- DB-backed system settings — configure SMTP, ntfy, Ollama, S3/SFTP backup, and more from the UI
+- Offsite database backups to S3-compatible storage or SFTP on a configurable schedule
+- Dashboard with active/expiring/expired counts and estimated monthly spend
+- Multi-user/household accounts — everyone sees the same data
+- Admin-invite-only (no public sign-up) since this stores sensitive household data
 - Mobile-friendly responsive UI, installable as a PWA ("Add to Home Screen")
 - SQLite storage — a single file, easy to back up, no separate database service
+- Opt-in modules: enable Travel and/or Home at first-run setup, or toggle from Settings later
 
 ## Screenshots
 
@@ -34,9 +46,17 @@ reminders before either expires.
 | --- | --- |
 | ![Dashboard](docs/screenshots/dashboard.png) | ![Contracts list](docs/screenshots/contracts-list.png) |
 
-| Contract detail |
-| --- |
-| ![Contract detail](docs/screenshots/contract-detail.png) |
+| Contract detail | Travel — trips |
+| --- | --- |
+| ![Contract detail](docs/screenshots/contract-detail.png) | ![Travel list](docs/screenshots/travel-list.png) |
+
+| Trip detail | Home — properties |
+| --- | --- |
+| ![Trip detail](docs/screenshots/trip-detail.png) | ![Home list](docs/screenshots/home-list.png) |
+
+| Property detail | Settings — system |
+| --- | --- |
+| ![Property detail](docs/screenshots/property-detail.png) | ![Settings — system](docs/screenshots/settings-system.png) |
 
 ## Tech stack
 
@@ -71,7 +91,7 @@ docker compose up -d
 ```
 
 This pulls the prebuilt image from
-[Docker Hub](https://hub.docker.com/r/jaysbeekay/contracts), runs pending
+[Docker Hub](https://hub.docker.com/r/jaysbeekay/hearth), runs pending
 Prisma migrations automatically on container start, and serves the app on
 port 3000. The SQLite database (`data/app.db`) and uploaded documents
 (`data/uploads/`) live in `./data` on the host, mounted into the container —
@@ -82,7 +102,7 @@ back up that directory to back up everything.
 ```yaml
 services:
   app:
-    image: jaysbeekay/contracts:latest
+    image: jaysbeekay/hearth:latest
     ports:
       - "3000:3000"
     environment:
@@ -98,7 +118,7 @@ services:
       SMTP_SECURE: ${SMTP_SECURE:-false}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-      SMTP_FROM: ${SMTP_FROM:-Contracts <no-reply@localhost>}
+      SMTP_FROM: ${SMTP_FROM:-Hearth <no-reply@localhost>}
       NTFY_URL: ${NTFY_URL:-https://ntfy.sh}
       NTFY_TOPIC: ${NTFY_TOPIC:-}
       NTFY_TOKEN: ${NTFY_TOKEN:-}
@@ -136,7 +156,7 @@ The image is built and pushed to Docker Hub automatically by
 on every push to `main` (tagged `latest`) and on `v*` tags — that same
 workflow also pushes this README to Docker Hub as the repository's
 overview, so the two stay in sync. To build from source instead of
-pulling, run `docker build -t jaysbeekay/contracts:local .` and change
+pulling, run `docker build -t jaysbeekay/hearth:local .` and change
 `image:` in `docker-compose.yml` to that tag.
 
 ## Locking down access with nginx + mTLS
@@ -504,7 +524,7 @@ the body pulled from the matching `CHANGELOG.md` section so each release
 captures the functionality that shipped in it.
 
 `docker-publish.yml` builds and pushes the image to Docker Hub as
-[`jaysbeekay/contracts`](https://hub.docker.com/r/jaysbeekay/contracts),
+[`jaysbeekay/hearth`](https://hub.docker.com/r/jaysbeekay/hearth),
 tagged `latest` on every push to `main` and `vx.y.z` on a real tag push. If
 the tag was cut via `release.yml`'s manual dispatch instead of a tag push,
 also run `docker-publish.yml` manually against the new tag to get the
