@@ -26,7 +26,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: jaysbeekay/contracts
+          images: jaysbeekay/hearth
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=tag
@@ -48,6 +48,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: jaysbeekay/contracts
+          repository: jaysbeekay/hearth
           readme-filepath: ./README.md
-          short-description: "Self-hosted contract & warranty tracker with expiry reminders"
+          short-description: "Self-hosted household management: contracts, travel, home, and more"

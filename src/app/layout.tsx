@@ -14,8 +14,8 @@ const sourceCodePro = Source_Code_Pro({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Contracts", template: "%s · Contracts" },
-  description: "Track your personal contracts and never miss a renewal.",
+  title: { default: "Hearth", template: "%s · Hearth" },
+  description: "Household management: contracts, products, travel, home, and more.",
   manifest: "/manifest.json",
   icons: {
     icon: "/icon.svg",
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Contracts",
+    title: "Hearth",
   },
 };
 

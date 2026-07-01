@@ -1,7 +1,7 @@
 {
-  "name": "Contracts",
-  "short_name": "Contracts",
-  "description": "Track your personal contracts and never miss a renewal.",
+  "name": "Hearth",
+  "short_name": "Hearth",
+  "description": "Household management: contracts, products, travel, home, and more.",
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#f6f8fb",

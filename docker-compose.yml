@@ -1,6 +1,6 @@
 services:
   app:
-    image: jaysbeekay/contracts:latest
+    image: jaysbeekay/hearth:latest
     ports:
       - "3000:3000"
     environment:
@@ -16,7 +16,7 @@ services:
       SMTP_SECURE: ${SMTP_SECURE:-false}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-      SMTP_FROM: ${SMTP_FROM:-Contracts <no-reply@localhost>}
+      SMTP_FROM: ${SMTP_FROM:-Hearth <no-reply@localhost>}
       NTFY_URL: ${NTFY_URL:-https://ntfy.sh}
       NTFY_TOPIC: ${NTFY_TOPIC:-}
       NTFY_TOKEN: ${NTFY_TOKEN:-}
