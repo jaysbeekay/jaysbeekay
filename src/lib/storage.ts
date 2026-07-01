@@ -15,12 +15,22 @@ export const ALLOWED_MIME_TYPES = new Set([
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ]);
 
+// IDs are always database-sourced cuids, but path.basename() strips any
+// directory-traversal characters defensively in case that ever changes.
 function contractDir(contractId: string) {
-  return path.join(path.resolve(env.uploadsDir), contractId);
+  return path.join(path.resolve(env.uploadsDir), path.basename(contractId));
 }
 
 function productDir(productId: string) {
-  return path.join(path.resolve(env.uploadsDir), "products", productId);
+  return path.join(path.resolve(env.uploadsDir), "products", path.basename(productId));
+}
+
+function tripSegmentDir(tripSegmentId: string) {
+  return path.join(path.resolve(env.uploadsDir), "trip-segments", path.basename(tripSegmentId));
+}
+
+function homeItemDir(homeItemId: string) {
+  return path.join(path.resolve(env.uploadsDir), "home-items", path.basename(homeItemId));
 }
 
 // storedName is always a freshly generated UUID plus a sanitized extension,
@@ -82,4 +92,58 @@ export async function deleteProductDocument(productId: string, storedName: strin
 
 export async function deleteProductDir(productId: string) {
   await fs.rm(productDir(productId), { recursive: true, force: true });
+}
+
+export async function saveTripSegmentDocument(tripSegmentId: string, file: File) {
+  const dir = tripSegmentDir(tripSegmentId);
+  await fs.mkdir(dir, { recursive: true });
+
+  const storedName = `${randomUUID()}${safeExtension(file.name)}`;
+  const fullPath = path.join(dir, storedName);
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  await fs.writeFile(fullPath, buffer);
+
+  return { storedName, size: buffer.byteLength };
+}
+
+export async function readTripSegmentDocument(tripSegmentId: string, storedName: string) {
+  const fullPath = path.join(tripSegmentDir(tripSegmentId), storedName);
+  return fs.readFile(fullPath);
+}
+
+export async function deleteTripSegmentDocument(tripSegmentId: string, storedName: string) {
+  const fullPath = path.join(tripSegmentDir(tripSegmentId), storedName);
+  await fs.rm(fullPath, { force: true });
+}
+
+export async function deleteTripSegmentDir(tripSegmentId: string) {
+  await fs.rm(tripSegmentDir(tripSegmentId), { recursive: true, force: true });
+}
+
+export async function saveHomeItemDocument(homeItemId: string, file: File) {
+  const dir = homeItemDir(homeItemId);
+  await fs.mkdir(dir, { recursive: true });
+
+  const storedName = `${randomUUID()}${safeExtension(file.name)}`;
+  const fullPath = path.join(dir, storedName);
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  await fs.writeFile(fullPath, buffer);
+
+  return { storedName, size: buffer.byteLength };
+}
+
+export async function readHomeItemDocument(homeItemId: string, storedName: string) {
+  const fullPath = path.join(homeItemDir(homeItemId), storedName);
+  return fs.readFile(fullPath);
+}
+
+export async function deleteHomeItemDocument(homeItemId: string, storedName: string) {
+  const fullPath = path.join(homeItemDir(homeItemId), storedName);
+  await fs.rm(fullPath, { force: true });
+}
+
+export async function deleteHomeItemDir(homeItemId: string) {
+  await fs.rm(homeItemDir(homeItemId), { recursive: true, force: true });
 }

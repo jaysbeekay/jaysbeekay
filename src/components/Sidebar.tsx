@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FileSignature } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { NAV_ITEMS } from "@/components/nav-items";
+import { getNavItems } from "@/components/nav-items";
+import type { ModuleKey } from "@/lib/modules/registry";
 import { SignOutButton } from "@/components/SignOutButton";
 
 function isActive(href: string, pathname: string) {
@@ -14,11 +15,14 @@ function isActive(href: string, pathname: string) {
 export function Sidebar({
   userName,
   userEmail,
+  enabledModules,
 }: {
   userName: string;
   userEmail: string;
+  enabledModules: ModuleKey[];
 }) {
   const pathname = usePathname();
+  const items = getNavItems(new Set(enabledModules));
 
   return (
     <aside className="hidden w-60 flex-col border-r border-border bg-surface md:flex">
@@ -28,7 +32,7 @@ export function Sidebar({
       </div>
 
       <nav className="flex-1 space-y-1 px-3">
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+        {items.map(({ href, label, icon: Icon }) => {
           const active = isActive(href, pathname);
           return (
             <Link

@@ -12,6 +12,8 @@ import {
   setupSchema,
 } from "@/lib/validation/auth";
 import { formDataToStringValues } from "@/lib/form-state";
+import { isKnownModuleKey } from "@/lib/modules/enablement";
+import type { ModuleKey } from "@/lib/modules/registry";
 
 export type ActionState = {
   error?: string;
@@ -44,16 +46,29 @@ export async function setupAdmin(
     return { error: firstIssueMessage(parsed.error) };
   }
 
+  const selectedModules = formData
+    .getAll("modules")
+    .filter((value) => typeof value === "string" && isKnownModuleKey(value)) as ModuleKey[];
+
   const passwordHash = await bcrypt.hash(parsed.data.password, 12);
 
-  await prisma.user.create({
-    data: {
-      name: parsed.data.name,
-      email: parsed.data.email,
-      passwordHash,
-      role: "ADMIN",
-    },
-  });
+  await prisma.$transaction([
+    prisma.user.create({
+      data: {
+        name: parsed.data.name,
+        email: parsed.data.email,
+        passwordHash,
+        role: "ADMIN",
+      },
+    }),
+    ...(selectedModules.length > 0
+      ? [
+          prisma.moduleEnablement.createMany({
+            data: selectedModules.map((key) => ({ key, enabled: true })),
+          }),
+        ]
+      : []),
+  ]);
 
   await signIn("credentials", {
     email: parsed.data.email,

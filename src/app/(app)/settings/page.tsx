@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { DatabaseBackup, Users, Webhook } from "lucide-react";
+import { DatabaseBackup, LayoutGrid, Users, Webhook } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { updateNotificationPreferences } from "@/lib/actions/auth";
@@ -58,6 +58,13 @@ export default async function SettingsPage() {
             >
               <Webhook size={16} />
               Webhooks
+            </Link>
+            <Link
+              href="/settings/modules"
+              className="inline-flex items-center gap-2 text-sm text-accent hover:underline"
+            >
+              <LayoutGrid size={16} />
+              Modules
             </Link>
           </div>
         )}
