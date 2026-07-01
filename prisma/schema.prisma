@@ -330,20 +330,73 @@ model TripSegmentDocument {
 }
 
 model Property {
-  id          String     @id @default(cuid())
+  id          String  @id @default(cuid())
   label       String
   address     String?
   notes       String?
+  isRented    Boolean @default(false)
 
   createdById String
-  createdBy   User       @relation(fields: [createdById], references: [id])
+  createdBy   User    @relation(fields: [createdById], references: [id])
 
-  items       HomeItem[]
+  items             HomeItem[]
+  rentalAgreements  RentalAgreement[]
+  rentalStatements  RentalStatement[]
 
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("properties")
+}
+
+model RentalAgreement {
+  id                   String    @id @default(cuid())
+  propertyId           String
+  property             Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  tenantName           String?
+  weeklyRent           Float
+  managementFeePercent Float?
+  leaseStart           DateTime?
+  leaseEnd             DateTime?
+  bondAmount           Float?
+  currency             String    @default("AUD")
+  notes                String?
+  createdAt            DateTime  @default(now())
+
+  @@map("rental_agreements")
+}
+
+model RentalStatement {
+  id              String                    @id @default(cuid())
+  propertyId      String
+  property        Property                  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  periodStart     DateTime?
+  periodEnd       DateTime?
+  statementDate   DateTime?
+  grossRent       Float?
+  managementFee   Float?
+  otherDeductions Float?
+  netAmount       Float?
+  currency        String                    @default("AUD")
+  notes           String?
+  documents       RentalStatementDocument[]
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+
+  @@map("rental_statements")
+}
+
+model RentalStatementDocument {
+  id                String          @id @default(cuid())
+  rentalStatementId String
+  rentalStatement   RentalStatement @relation(fields: [rentalStatementId], references: [id], onDelete: Cascade)
+  filename          String
+  storedName        String
+  mimeType          String
+  size              Int
+  uploadedAt        DateTime        @default(now())
+
+  @@map("rental_statement_documents")
 }
 
 model HomeItem {

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Pencil, Trash2, Plus, Wrench, Sparkles, Hammer, Tag } from "lucide-react";
+import { Pencil, Trash2, Plus, Wrench, Sparkles, Hammer, Tag, Home } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireModuleEnabled } from "@/lib/modules/enablement";
@@ -169,6 +169,35 @@ export default async function PropertyDetailPage({
               );
             })}
           </div>
+        )}
+      </div>
+
+      <div className="rounded-xl border border-border bg-surface p-4 md:p-6">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <Home size={18} className="text-foreground/50" />
+            <h2 className="font-medium">Rental tracking</h2>
+          </div>
+          {property.isRented ? (
+            <Link
+              href={`/home/${property.id}/rental`}
+              className="text-sm font-medium text-accent hover:underline"
+            >
+              View rental overview →
+            </Link>
+          ) : (
+            <Link
+              href={`/home/${property.id}/rental`}
+              className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/5"
+            >
+              Set up rental tracking
+            </Link>
+          )}
+        </div>
+        {property.isRented && (
+          <p className="mt-2 text-sm text-foreground/60">
+            This property is rented — track statements and reconcile rent income.
+          </p>
         )}
       </div>
 

@@ -147,3 +147,38 @@ export async function deleteHomeItemDocument(homeItemId: string, storedName: str
 export async function deleteHomeItemDir(homeItemId: string) {
   await fs.rm(homeItemDir(homeItemId), { recursive: true, force: true });
 }
+
+function rentalStatementDir(statementId: string) {
+  return path.join(
+    path.resolve(env.uploadsDir),
+    "rental-statements",
+    path.basename(statementId),
+  );
+}
+
+export async function saveRentalStatementDocument(statementId: string, file: File) {
+  const dir = rentalStatementDir(statementId);
+  await fs.mkdir(dir, { recursive: true });
+
+  const storedName = `${randomUUID()}${safeExtension(file.name)}`;
+  const fullPath = path.join(dir, storedName);
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  await fs.writeFile(fullPath, buffer);
+
+  return { storedName, size: buffer.byteLength };
+}
+
+export async function readRentalStatementDocument(statementId: string, storedName: string) {
+  const fullPath = path.join(rentalStatementDir(statementId), storedName);
+  return fs.readFile(fullPath);
+}
+
+export async function deleteRentalStatementDocument(statementId: string, storedName: string) {
+  const fullPath = path.join(rentalStatementDir(statementId), storedName);
+  await fs.rm(fullPath, { force: true });
+}
+
+export async function deleteRentalStatementDir(statementId: string) {
+  await fs.rm(rentalStatementDir(statementId), { recursive: true, force: true });
+}

@@ -25,3 +25,36 @@ export const homeItemSchema = z.object({
 });
 
 export type HomeItemInput = z.infer<typeof homeItemSchema>;
+
+export const rentalAgreementSchema = z.object({
+  tenantName: z.preprocess(emptyToUndefined, z.string().trim().max(200).optional()),
+  weeklyRent: z.preprocess(
+    emptyToUndefined,
+    z.coerce.number().min(0, "Weekly rent must be positive"),
+  ),
+  managementFeePercent: z.preprocess(
+    emptyToUndefined,
+    z.coerce.number().min(0).max(100).optional(),
+  ),
+  leaseStart: z.preprocess(emptyToUndefined, z.coerce.date().optional()),
+  leaseEnd: z.preprocess(emptyToUndefined, z.coerce.date().optional()),
+  bondAmount: z.preprocess(emptyToUndefined, z.coerce.number().min(0).optional()),
+  currency: z.string().trim().min(1).max(10).default("AUD"),
+  notes: z.preprocess(emptyToUndefined, z.string().trim().max(5000).optional()),
+});
+
+export type RentalAgreementInput = z.infer<typeof rentalAgreementSchema>;
+
+export const rentalStatementSchema = z.object({
+  periodStart: z.preprocess(emptyToUndefined, z.coerce.date().optional()),
+  periodEnd: z.preprocess(emptyToUndefined, z.coerce.date().optional()),
+  statementDate: z.preprocess(emptyToUndefined, z.coerce.date().optional()),
+  grossRent: z.preprocess(emptyToUndefined, z.coerce.number().min(0).optional()),
+  managementFee: z.preprocess(emptyToUndefined, z.coerce.number().min(0).optional()),
+  otherDeductions: z.preprocess(emptyToUndefined, z.coerce.number().min(0).optional()),
+  netAmount: z.preprocess(emptyToUndefined, z.coerce.number().optional()),
+  currency: z.string().trim().min(1).max(10).default("AUD"),
+  notes: z.preprocess(emptyToUndefined, z.string().trim().max(5000).optional()),
+});
+
+export type RentalStatementInput = z.infer<typeof rentalStatementSchema>;
