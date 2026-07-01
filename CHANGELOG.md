@@ -7,6 +7,22 @@ Versions follow [Semantic Versioning](https://semver.org/), starting at `0.1.0`.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-07-01
+
+### Added
+
+- **DB-backed application settings** — SMTP, ntfy push, Ollama, barcode
+  lookup, S3/SFTP backup destinations, and cron schedules are now
+  configurable from Settings > System in the admin UI, with no Docker
+  restart required. Sensitive values (passwords, tokens, keys) are
+  encrypted at rest with AES-256-GCM when `ENCRYPTION_KEY` is set.
+  Environment variables remain as fallbacks for zero-migration upgrades.
+- **Rental tracking** on Home properties — record rental agreements with
+  weekly rent, tenant name, lease dates, and bond amount, then import
+  monthly property-manager statements via file upload with AI-assisted
+  extraction and automatic reconciliation against expected rent. Supports
+  REIWA Form 1AA lease extraction.
+
 ## [0.2.0] - 2026-07-01
 
 ### Added
@@ -29,18 +45,6 @@ Versions follow [Semantic Versioning](https://semver.org/), starting at `0.1.0`.
 - **Playwright e2e test suite** (28 tests) covering regression, module-toggle
   gating, Travel CRUD, upload security, and authorisation, running
   automatically on every push and pull request via GitHub Actions.
-
-- **DB-backed application settings** — SMTP, ntfy push, Ollama, barcode
-  lookup, S3/SFTP backup destinations, and cron schedules are now
-  configurable from Settings > System in the admin UI, with no Docker
-  restart required. Sensitive values (passwords, tokens, keys) are
-  encrypted at rest with AES-256-GCM when `ENCRYPTION_KEY` is set.
-  Environment variables remain as fallbacks for zero-migration upgrades.
-- **Rental tracking** on Home properties — record rental agreements with
-  weekly rent, tenant name, lease dates, and bond amount, then import
-  monthly property-manager statements via file upload with AI-assisted
-  extraction and automatic reconciliation against expected rent. Supports
-  REIWA Form 1AA lease extraction.
 
 ### Fixed
 
