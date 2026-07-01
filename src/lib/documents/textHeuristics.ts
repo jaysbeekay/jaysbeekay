@@ -70,7 +70,7 @@ export function findLabeledValue(
 }
 
 export function findCost(text: string): string | undefined {
-  const priority = /(total|amount due|premium|monthly fee|amount payable|payment|fee)/i;
+  const priority = /(total|amount due|balance due|premium|monthly fee|amount payable|payment)/i;
   let fallback: string | undefined;
   for (const line of text.split(/\r?\n/)) {
     const match = line.match(/(?:AUD|USD|NZD|GBP|EUR|\$)\s?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/);
@@ -113,8 +113,12 @@ export function findCompanyLine(text: string): string | undefined {
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter((line) => line.length > 1 && line.length < 80);
-  const companyLine = lines.find((line) =>
-    /(pty ltd|ltd\.?|inc\.?|llc|limited|insurance|telecom|energy|utilities)/i.test(line),
+  // Skip financial-summary lines (e.g. "Total Inc GST: $467.00") so the
+  // "Inc" suffix match below doesn't mistake a tax/total line for a company name.
+  const companyLine = lines.find(
+    (line) =>
+      !/\$|gst|total|balance due|amount due/i.test(line) &&
+      /(pty ltd|ltd\.?|inc\.?|llc|limited|insurance|telecom|energy|utilities)/i.test(line),
   );
   return (companyLine ?? lines[0])?.slice(0, 200);
 }

@@ -1,0 +1,26 @@
+import { z } from "zod";
+
+export const HOME_ITEM_TYPES = ["MAINTENANCE", "IMPROVEMENT", "REPAIR", "OTHER"] as const;
+
+const emptyToUndefined = (val: unknown) =>
+  typeof val === "string" && val.trim() === "" ? undefined : val;
+
+export const propertySchema = z.object({
+  label: z.string().trim().min(1, "Label is required").max(200),
+  address: z.preprocess(emptyToUndefined, z.string().trim().max(300).optional()),
+  notes: z.preprocess(emptyToUndefined, z.string().trim().max(5000).optional()),
+});
+
+export type PropertyInput = z.infer<typeof propertySchema>;
+
+export const homeItemSchema = z.object({
+  type: z.enum(HOME_ITEM_TYPES),
+  title: z.string().trim().min(1, "Title is required").max(200),
+  provider: z.preprocess(emptyToUndefined, z.string().trim().max(200).optional()),
+  date: z.preprocess(emptyToUndefined, z.coerce.date().optional()),
+  cost: z.preprocess(emptyToUndefined, z.coerce.number().min(0).optional()),
+  currency: z.string().trim().min(1).max(10).default("AUD"),
+  notes: z.preprocess(emptyToUndefined, z.string().trim().max(5000).optional()),
+});
+
+export type HomeItemInput = z.infer<typeof homeItemSchema>;

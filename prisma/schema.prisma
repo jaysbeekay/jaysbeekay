@@ -77,12 +77,20 @@ enum BackupStatus {
 
 enum ModuleKey {
   TRAVEL
+  HOME
 }
 
 enum TripSegmentType {
   FLIGHT
   LODGING
   ACTIVITY
+}
+
+enum HomeItemType {
+  MAINTENANCE
+  IMPROVEMENT
+  REPAIR
+  OTHER
 }
 
 model User {
@@ -100,6 +108,7 @@ model User {
   products          Product[]
   webhookEndpoints  WebhookEndpoint[]
   trips             Trip[]
+  properties        Property[]
 
   @@map("users")
 }
@@ -318,4 +327,54 @@ model TripSegmentDocument {
   uploadedAt    DateTime    @default(now())
 
   @@map("trip_segment_documents")
+}
+
+model Property {
+  id          String     @id @default(cuid())
+  label       String
+  address     String?
+  notes       String?
+
+  createdById String
+  createdBy   User       @relation(fields: [createdById], references: [id])
+
+  items       HomeItem[]
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@map("properties")
+}
+
+model HomeItem {
+  id         String             @id @default(cuid())
+  propertyId String
+  property   Property           @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  type       HomeItemType
+  title      String
+  provider   String?
+  date       DateTime?
+  cost       Float?
+  currency   String             @default("AUD")
+  notes      String?
+
+  documents  HomeItemDocument[]
+
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  @@map("home_items")
+}
+
+model HomeItemDocument {
+  id         String   @id @default(cuid())
+  homeItemId String
+  homeItem   HomeItem @relation(fields: [homeItemId], references: [id], onDelete: Cascade)
+  filename   String
+  storedName String
+  mimeType   String
+  size       Int
+  uploadedAt DateTime @default(now())
+
+  @@map("home_item_documents")
 }

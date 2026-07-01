@@ -97,3 +97,10 @@ export const TRIP_SEGMENT_TYPE_LABELS: Record<string, string> = {
   LODGING: "Lodging",
   ACTIVITY: "Activity",
 };
+
+export const HOME_ITEM_TYPE_LABELS: Record<string, string> = {
+  MAINTENANCE: "Maintenance",
+  IMPROVEMENT: "Improvement",
+  REPAIR: "Repair",
+  OTHER: "Other",
+};
